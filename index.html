@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>sky星星的网页</title>
+    <style>
+        /* 全局设置 */
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Microsoft YaHei', 'PingFang SC', 'Helvetica Neue', sans-serif;
+            background-image: url('https://cdn.pixabay.com/photo/2017/08/30/01/05/milky-way-2695569_1280.jpg');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            background-color: #0a0c10;
+        }
+
+        /* 画布：用于绘制闪烁的星星 */
+        #starCanvas {
+            display: block;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        /* 标题容器 */
+        .title-container {
+            position: fixed;
+            top: 20px;
+            left: 0;
+            width: 100%;
+            text-align: center;
+            z-index: 2;
+            pointer-events: none;
+            opacity: 0;
+            animation: titleRise 2s ease-out forwards;
+        }
+
+        /* 标题纯文字 */
+        .pure-title {
+            display: inline-block;
+            font-size: 48px;
+            font-weight: 700;
+            color: white;
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.8);
+            letter-spacing: 4px;
+        }
+
+        @keyframes titleRise {
+            0% {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* 按钮容器 */
+        .button-container {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 6;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 30px;
+        }
+
+        .collidable-btn {
+            /* 仅用于标识碰撞箱 */
+        }
+
+        /* 液态玻璃按钮 */
+        .liquid-glass-btn {
+            display: inline-block;
+            padding: 18px 45px;
+            font-size: 26px;
+            font-weight: bold;
+            color: white;
+            text-decoration: none;
+            letter-spacing: 2px;
+            background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0.1) 70%);
+            border-radius: 80px;
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 
+                0 0 20px rgba(255, 255, 255, 0.2),
+                inset 2px 2px 5px rgba(255, 255, 255, 0.5),
+                inset -2px -2px 5px rgba(0, 0, 0, 0.1);
+            transition: all 0.4s ease;
+            cursor: pointer;
+            text-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+        }
+
+        .liquid-glass-btn:hover {
+            transform: scale(1.05);
+            background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0.15) 70%);
+            box-shadow: 
+                0 0 30px rgba(255, 255, 255, 0.4),
+                inset 3px 3px 8px rgba(255, 255, 255, 0.6),
+                inset -3px -3px 8px rgba(0, 0, 0, 0.15);
+            border-color: rgba(255, 255, 255, 0.6);
+        }
+
+        .liquid-glass-btn:active {
+            transform: scale(0.98);
+        }
+
+        /* 模态框遮罩 */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.3);
+            z-index: 10;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            pointer-events: auto;
+            backdrop-filter: blur(2px);
+        }
+
+        /* 液态玻璃模态框（原磨砂玻璃改为液态玻璃） */
+        .modal-content {
+            width: 80%;
+            max-width: 400px;
+            max-height: 60vh;
+            background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0.1) 70%);
+            /* 移除磨砂玻璃的模糊效果 */
+            backdrop-filter: none;
+            -webkit-backdrop-filter: none;
+            border-radius: 30px;
+            padding: 25px;
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 
+                0 0 20px rgba(255, 255, 255, 0.2),
+                inset 2px 2px 5px rgba(255, 255, 255, 0.5),
+                inset -2px -2px 5px rgba(0, 0, 0, 0.1);
+            color: white;
+            transform: translateY(100%);
+            transition: transform 0.4s ease-out;
+            overflow-y: auto;
+        }
+
+        .modal-overlay.show .modal-content {
+            transform: translateY(0);
+        }
+
+        .modal-overlay.hide .modal-content {
+            transform: translateY(100%);
+        }
+
+        .friend-list {
+            list-style: none;
+            padding: 0;
+            margin: 20px 0 0;
+            text-align: left;
+        }
+
+        .friend-list li {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 40px;
+            padding: 12px 20px;
+            margin-bottom: 10px;
+            font-size: 18px;
+            font-family: monospace;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+        }
+
+        .modal-title {
+            font-size: 28px;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 5px;
+            text-shadow: 0 2px 5px rgba(0,0,0,0.5);
+        }
+
+        .modal-sub {
+            text-align: center;
+            font-size: 16px;
+            opacity: 0.8;
+            margin-top: -5px;
+        }
+
+        .close-hint {
+            text-align: center;
+            font-size: 14px;
+            opacity: 0.6;
+            margin-top: 15px;
+            font-style: italic;
+        }
+
+        /* 小球样式 */
+        .ball {
+            position: fixed;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            z-index: 5;
+            cursor: grab;
+            user-select: none;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+            will-change: left, top;
+        }
+
+        .ball-liquid {
+            background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.8) 5%, rgba(255, 255, 255, 0.2) 60%, rgba(255, 255, 255, 0) 80%);
+            background-color: rgba(100, 200, 255, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 
+                0 0 20px rgba(255, 255, 255, 0.3),
+                inset 5px 5px 10px rgba(255, 255, 255, 0.6),
+                inset -5px -5px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .ball-frosted {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 
+                0 0 30px rgba(255, 255, 255, 0.2),
+                inset 0 0 20px rgba(255, 255, 255, 0.5);
+        }
+
+        .ball:active {
+            cursor: grabbing;
+        }
+
+        @media (max-width: 768px) {
+            .pure-title {
+                font-size: 32px;
+            }
+            .liquid-glass-btn {
+                font-size: 22px;
+                padding: 15px 35px;
+            }
+            .modal-content {
+                width: 90%;
+                padding: 20px;
+            }
+            .friend-list li {
+                font-size: 16px;
+                padding: 10px 15px;
+            }
+            .ball {
+                width: 60px;
+                height: 60px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <canvas id="starCanvas"></canvas>
+
+    <div class="ball ball-liquid" id="ballLiquid"></div>
+    <div class="ball ball-frosted" id="ballFrosted"></div>
+
+    <div class="title-container">
+        <div class="pure-title">✨ 欢迎来到星星的网页 ✨</div>
+    </div>
+
+    <div class="button-container">
+        <button class="liquid-glass-btn collidable-btn" onclick="window.open('https://www.douyin.com/user/MS4wLjABAAAAJJh4FxMqbYWsxMzsWNA6-loe2r78IwfbvLA7GK3JiA8PI_IKH7OGeleF4TY_ikOb?from_tab_name=main', '_blank')">
+            去星星的抖音
+        </button>
+        <button class="liquid-glass-btn collidable-btn" id="friendBtn">
+            添加星星的好友
+        </button>
+    </div>
+
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal-content">
+            <div class="modal-title">星星的好友码(记得告诉星星你叫什么哦)</div>
+            <div class="modal-sub">选择一个复制添加</div>
+            <ul class="friend-list" id="friendList"></ul>
+            <div class="close-hint">我也是有底线的[○･｀Д´･○]点击空白处关闭</div>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            // ---------- 闪烁星星动画 ----------
+            const canvas = document.getElementById('starCanvas');
+            const ctx = canvas.getContext('2d');
+
+            function resizeCanvas() {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+            }
+            window.addEventListener('resize', resizeCanvas);
+            resizeCanvas();
+
+            const stars = [];
+            const starCount = 200;
+            for (let i = 0; i < starCount; i++) {
+                stars.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    radius: Math.random() * 2 + 1,
+                    brightness: Math.random() * 0.8 + 0.2,
+                    speed: 0.002 + Math.random() * 0.005
+                });
+            }
+
+            function animateStars() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                stars.forEach(star => {
+                    const twinkle = Math.sin(Date.now() * star.speed + star.x) * 0.2 + 0.8;
+                    const alpha = star.brightness * twinkle;
+                    ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+                    ctx.beginPath();
+                    ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+                requestAnimationFrame(animateStars);
+            }
+            animateStars();
+
+            // ---------- 好友码数据 ----------
+            const friendCodesRaw = "abc123,def456,ghi789,jkl012,mno345"; // 可修改
+            const friendCodes = friendCodesRaw.split(/[，,]+/).filter(code => code.trim() !== '');
+            const friendList = document.getElementById('friendList');
+            friendList.innerHTML = friendCodes.map(code => `<li>${code.trim()}</li>`).join('');
+
+            // ---------- 模态框逻辑 ----------
+            const modalOverlay = document.getElementById('modalOverlay');
+            const friendBtn = document.getElementById('friendBtn');
+
+            let isModalOpen = false;
+            let hideTimeout = null;
+
+            const ballLiquid = document.getElementById('ballLiquid');
+            const ballFrosted = document.getElementById('ballFrosted');
+            const balls = [ballLiquid, ballFrosted];
+
+            // ---------- 物理引擎相关 ----------
+            const GRAVITY = 0.3;
+            const BOUNCE = 0.7;
+            const FRICTION = 0.99;
+            const BUTTON_BOUNCE = 0.6;
+
+            const physics = balls.map(ball => ({
+                x: 0, y: 0,
+                vx: 0, vy: 0,
+                radius: ball.offsetWidth / 2,
+                dragging: false,
+                mass: 1,
+                lastMouseX: 0, lastMouseY: 0,
+                lastMouseTime: 0
+            }));
+
+            const collidableBtns = document.querySelectorAll('.collidable-btn');
+            let buttonRects = [];
+
+            function updateButtonRects() {
+                buttonRects = Array.from(collidableBtns).map(btn => {
+                    const rect = btn.getBoundingClientRect();
+                    return {
+                        left: rect.left,
+                        top: rect.top,
+                        right: rect.right,
+                        bottom: rect.bottom,
+                        width: rect.width,
+                        height: rect.height
+                    };
+                });
+            }
+            updateButtonRects();
+            window.addEventListener('resize', updateButtonRects);
+
+            function initBalls() {
+                balls.forEach((ball, index) => {
+                    const ballSize = ball.offsetWidth;
+                    const maxLeft = window.innerWidth - ballSize;
+                    const randomLeft = Math.random() * maxLeft;
+                    const startY = 50 + Math.random() * 100;
+                    ball.style.left = randomLeft + 'px';
+                    ball.style.top = startY + 'px';
+
+                    physics[index].x = randomLeft;
+                    physics[index].y = startY;
+                    physics[index].vx = (Math.random() - 0.5) * 2;
+                    physics[index].vy = Math.random() * 2;
+                });
+            }
+
+            function handleCollisionWithButton(p, rect) {
+                const closestX = Math.max(rect.left, Math.min(p.x, rect.right));
+                const closestY = Math.max(rect.top, Math.min(p.y, rect.bottom));
+
+                const dx = p.x - closestX;
+                const dy = p.y - closestY;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                const minDist = p.radius;
+
+                if (dist < minDist && dist > 0.001) {
+                    const nx = dx / dist;
+                    const ny = dy / dist;
+
+                    const overlap = minDist - dist;
+                    p.x += nx * overlap;
+                    p.y += ny * overlap;
+
+                    const vn = p.vx * nx + p.vy * ny;
+                    if (vn < 0) {
+                        const vt_x = p.vx - vn * nx;
+                        const vt_y = p.vy - vn * ny;
+                        p.vx = vt_x - vn * BUTTON_BOUNCE * nx;
+                        p.vy = vt_y - vn * BUTTON_BOUNCE * ny;
+                    }
+                    return true;
+                }
+                return false;
+            }
+
+            function updatePhysics() {
+                const width = window.innerWidth;
+                const height = window.innerHeight;
+
+                physics.forEach((p, idx) => {
+                    if (p.dragging) return;
+
+                    p.vx *= FRICTION;
+                    p.vy *= FRICTION;
+                    p.vy += GRAVITY;
+
+                    let newX = p.x + p.vx;
+                    let newY = p.y + p.vy;
+
+                    const r = p.radius;
+                    if (newX < r) { newX = r; p.vx = -p.vx * BOUNCE; }
+                    if (newX > width - r) { newX = width - r; p.vx = -p.vx * BOUNCE; }
+                    if (newY < r) { newY = r; p.vy = -p.vy * BOUNCE; }
+                    if (newY > height - r) { newY = height - r; p.vy = -p.vy * BOUNCE; }
+
+                    p.x = newX;
+                    p.y = newY;
+                    balls[idx].style.left = p.x + 'px';
+                    balls[idx].style.top = p.y + 'px';
+                });
+
+                // 小球之间碰撞
+                for (let i = 0; i < physics.length; i++) {
+                    for (let j = i + 1; j < physics.length; j++) {
+                        const p1 = physics[i];
+                        const p2 = physics[j];
+                        if (p1.dragging && p2.dragging) continue;
+
+                        const dx = p2.x - p1.x;
+                        const dy = p2.y - p1.y;
+                        const dist = Math.sqrt(dx * dx + dy * dy);
+                        const minDist = p1.radius + p2.radius;
+
+                        if (dist < minDist && dist > 0.001) {
+                            const nx = dx / dist;
+                            const ny = dy / dist;
+                            const vRelX = p2.vx - p1.vx;
+                            const vRelY = p2.vy - p1.vy;
+                            const vRelN = vRelX * nx + vRelY * ny;
+
+                            if (vRelN < 0) {
+                                const e = 0.7;
+                                const impulse = -(1 + e) * vRelN / (1/p1.mass + 1/p2.mass);
+                                if (!p1.dragging) {
+                                    p1.vx -= impulse / p1.mass * nx;
+                                    p1.vy -= impulse / p1.mass * ny;
+                                }
+                                if (!p2.dragging) {
+                                    p2.vx += impulse / p2.mass * nx;
+                                    p2.vy += impulse / p2.mass * ny;
+                                }
+
+                                const overlap = minDist - dist;
+                                if (!p1.dragging && !p2.dragging) {
+                                    p1.x -= overlap * nx * 0.5;
+                                    p1.y -= overlap * ny * 0.5;
+                                    p2.x += overlap * nx * 0.5;
+                                    p2.y += overlap * ny * 0.5;
+                                } else if (!p1.dragging) {
+                                    p1.x -= overlap * nx;
+                                    p1.y -= overlap * ny;
+                                } else if (!p2.dragging) {
+                                    p2.x += overlap * nx;
+                                    p2.y += overlap * ny;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // 小球与按钮碰撞
+                physics.forEach((p, idx) => {
+                    if (p.dragging) return;
+                    buttonRects.forEach(rect => {
+                        handleCollisionWithButton(p, rect);
+                    });
+                    balls[idx].style.left = p.x + 'px';
+                    balls[idx].style.top = p.y + 'px';
+                });
+            }
+
+            function animate() {
+                updatePhysics();
+                requestAnimationFrame(animate);
+            }
+
+            initBalls();
+            animate();
+
+            // 拖拽逻辑
+            balls.forEach((ball, idx) => {
+                const p = physics[idx];
+
+                ball.addEventListener('mousedown', (e) => {
+                    e.preventDefault();
+                    p.dragging = true;
+                    ball.style.cursor = 'grabbing';
+
+                    p.lastMouseX = e.clientX;
+                    p.lastMouseY = e.clientY;
+                    p.lastMouseTime = performance.now();
+
+                    const rect = ball.getBoundingClientRect();
+                    p.dragOffsetX = e.clientX - rect.left;
+                    p.dragOffsetY = e.clientY - rect.top;
+
+                    p.vx = 0;
+                    p.vy = 0;
+                });
+
+                ball.addEventListener('dragstart', (e) => e.preventDefault());
+            });
+
+            window.addEventListener('mousemove', (e) => {
+                physics.forEach((p, idx) => {
+                    if (!p.dragging) return;
+                    e.preventDefault();
+
+                    let newLeft = e.clientX - p.dragOffsetX;
+                    let newTop = e.clientY - p.dragOffsetY;
+
+                    const ballSize = balls[idx].offsetWidth;
+                    const maxLeft = window.innerWidth - ballSize;
+                    const maxTop = window.innerHeight - ballSize;
+                    newLeft = Math.max(0, Math.min(newLeft, maxLeft));
+                    newTop = Math.max(0, Math.min(newTop, maxTop));
+
+                    p.x = newLeft;
+                    p.y = newTop;
+                    balls[idx].style.left = newLeft + 'px';
+                    balls[idx].style.top = newTop + 'px';
+
+                    const now = performance.now();
+                    const dt = now - p.lastMouseTime;
+                    if (dt > 5) {
+                        p.vx = (e.clientX - p.lastMouseX) / dt * 15;
+                        p.vy = (e.clientY - p.lastMouseY) / dt * 15;
+                        p.lastMouseX = e.clientX;
+                        p.lastMouseY = e.clientY;
+                        p.lastMouseTime = now;
+                    }
+                });
+            });
+
+            window.addEventListener('mouseup', (e) => {
+                physics.forEach(p => {
+                    if (p.dragging) {
+                        p.dragging = false;
+                        balls.forEach(b => b.style.cursor = 'grab');
+                        const maxSpeed = 10;
+                        if (Math.abs(p.vx) > maxSpeed) p.vx = (p.vx > 0 ? maxSpeed : -maxSpeed);
+                        if (Math.abs(p.vy) > maxSpeed) p.vy = (p.vy > 0 ? maxSpeed : -maxSpeed);
+                    }
+                });
+            });
+
+            window.addEventListener('resize', () => {
+                updateButtonRects();
+                physics.forEach((p, idx) => {
+                    const ball = balls[idx];
+                    const ballSize = ball.offsetWidth;
+                    p.radius = ballSize / 2;
+                    const maxLeft = window.innerWidth - ballSize;
+                    const maxTop = window.innerHeight - ballSize;
+                    p.x = Math.max(0, Math.min(p.x, maxLeft));
+                    p.y = Math.max(0, Math.min(p.y, maxTop));
+                    ball.style.left = p.x + 'px';
+                    ball.style.top = p.y + 'px';
+                });
+            });
+
+            function openModal() {
+                if (isModalOpen) return;
+                if (hideTimeout) {
+                    clearTimeout(hideTimeout);
+                    hideTimeout = null;
+                }
+
+                physics.forEach((p, idx) => {
+                    if (!p.dragging) {
+                        const ball = balls[idx];
+                        const ballSize = ball.offsetWidth;
+                        if (ball === ballLiquid) {
+                            p.x = 10;
+                        } else {
+                            p.x = window.innerWidth - ballSize - 10;
+                        }
+                        p.y = Math.max(p.radius, Math.min(p.y, window.innerHeight - p.radius));
+                        p.vx = 0;
+                        p.vy = 0;
+                        ball.style.left = p.x + 'px';
+                        ball.style.top = p.y + 'px';
+                    }
+                });
+
+                modalOverlay.classList.remove('hide');
+                modalOverlay.style.display = 'flex';
+                void modalOverlay.offsetWidth;
+                modalOverlay.classList.add('show');
+                isModalOpen = true;
+            }
+
+            function closeModal() {
+                if (!isModalOpen) return;
+                modalOverlay.classList.remove('show');
+                modalOverlay.classList.add('hide');
+                hideTimeout = setTimeout(() => {
+                    modalOverlay.style.display = 'none';
+                    modalOverlay.classList.remove('hide');
+                    isModalOpen = false;
+                    hideTimeout = null;
+                }, 400);
+            }
+
+            friendBtn.addEventListener('click', openModal);
+            modalOverlay.addEventListener('click', (e) => {
+                if (e.target === modalOverlay) closeModal();
+            });
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && isModalOpen) closeModal();
+            });
+        })();
+    </script>
+</body>
+</html>
