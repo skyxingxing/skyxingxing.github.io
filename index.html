@@ -332,7 +332,7 @@
             animateStars();
 
             // ---------- 好友码数据 ----------
-            const friendCodesRaw = "abc123,def456,ghi789,jkl012,mno345"; // 可修改
+            const friendCodesRaw = "6RCW-6P8T-Y9XV,FD5H-D56D-P9Q0,5N12-S9CM-H10N"; // 可修改
             const friendCodes = friendCodesRaw.split(/[，,]+/).filter(code => code.trim() !== '');
             const friendList = document.getElementById('friendList');
             friendList.innerHTML = friendCodes.map(code => `<li>${code.trim()}</li>`).join('');
@@ -657,4 +657,5 @@
         })();
     </script>
 </body>
+
 </html>
