@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>星星的梦幻主页 · 物理小球</title>
+    <title>sky星星的网页</title>
     <!-- 引入不蒜子计数器脚本 -->
     <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
     <style>
@@ -362,14 +362,14 @@
 
     <div class="button-container">
         <button class="liquid-glass-btn collidable-btn" onclick="window.open('https://www.douyin.com/user/MS4wLjABAAAAJJh4FxMqbYWsxMzsWNA6-loe2r78IwfbvLA7GK3JiA8PI_IKH7OGeleF4TY_ikOb?from_tab_name=main', '_blank')">
-            ✨ 去星星的抖音 ✨
+            去星星的抖音
         </button>
         <button class="liquid-glass-btn collidable-btn" id="friendBtn">
-            ✨ 添加星星的好友 ✨
+            添加星星的好友
         </button>
         <!-- 新增管理小球按钮 -->
         <button class="liquid-glass-btn collidable-btn" id="manageBallBtn">
-            ✨ 管理小球 ✨
+            管理小球
         </button>
     </div>
 
@@ -383,10 +383,10 @@
     <!-- 模态框（好友码） -->
     <div class="modal-overlay" id="modalOverlay">
         <div class="modal-content">
-            <div class="modal-title">🌟 星星的好友码</div>
-            <div class="modal-sub">选择一个复制添加</div>
+            <div class="modal-title">星星的好友码</div>
+            <div class="modal-sub">选择一个复制添加(记得告诉星星你叫什么哦)</div>
             <ul class="friend-list" id="friendList"></ul>
-            <div class="close-hint">点击空白处关闭</div>
+            <div class="close-hint">我也是有底线的[○･｀Д´･○]点击空白处关闭</div>
         </div>
     </div>
 
@@ -435,7 +435,7 @@
             animateStars();
 
             // ---------- 好友码数据 ----------
-            const friendCodesRaw = "abc123,def456,ghi789,jkl012,mno345"; // 可修改
+            const friendCodesRaw = "6RCW-6P8T-Y9XV,FD5H-D56D-P9Q0,5N12-S9CM-H10N"; // 可修改
             const friendCodes = friendCodesRaw.split(/[，,]+/).filter(code => code.trim() !== '');
             const friendList = document.getElementById('friendList');
             friendList.innerHTML = friendCodes.map(code => `<li>${code.trim()}</li>`).join('');
@@ -1108,3 +1108,4 @@
     </script>
 </body>
 </html>
+
