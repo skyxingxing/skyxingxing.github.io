@@ -2,8 +2,8 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>sky星星的网页</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>星星的梦幻主页 · 物理小球</title>
     <!-- 引入不蒜子计数器脚本 -->
     <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
     <style>
@@ -263,6 +263,7 @@
             box-shadow: 0 10px 20px rgba(0,0,0,0.3);
             will-change: left, top;
             transition: box-shadow 0.1s;
+            touch-action: none; /* 禁止触摸时页面滚动 */
         }
 
         .ball-liquid {
@@ -303,7 +304,7 @@
             z-index: 100;
             border: 1px solid rgba(255, 255, 255, 0.3);
             box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-            pointer-events: none; /* 让计数器不干扰点击 */
+            pointer-events: none;
             font-family: 'Microsoft YaHei', sans-serif;
             letter-spacing: 1px;
         }
@@ -361,14 +362,14 @@
 
     <div class="button-container">
         <button class="liquid-glass-btn collidable-btn" onclick="window.open('https://www.douyin.com/user/MS4wLjABAAAAJJh4FxMqbYWsxMzsWNA6-loe2r78IwfbvLA7GK3JiA8PI_IKH7OGeleF4TY_ikOb?from_tab_name=main', '_blank')">
-            去星星的抖音
+            ✨ 去星星的抖音 ✨
         </button>
         <button class="liquid-glass-btn collidable-btn" id="friendBtn">
-            添加星星的好友
+            ✨ 添加星星的好友 ✨
         </button>
         <!-- 新增管理小球按钮 -->
         <button class="liquid-glass-btn collidable-btn" id="manageBallBtn">
-            管理小球
+            ✨ 管理小球 ✨
         </button>
     </div>
 
@@ -382,10 +383,10 @@
     <!-- 模态框（好友码） -->
     <div class="modal-overlay" id="modalOverlay">
         <div class="modal-content">
-            <div class="modal-title">星星的好友码</div>
-            <div class="modal-sub">选择一个复制添加(记得告诉星星你叫什么哦)</div>
+            <div class="modal-title">🌟 星星的好友码</div>
+            <div class="modal-sub">选择一个复制添加</div>
             <ul class="friend-list" id="friendList"></ul>
-            <div class="close-hint">我也是有底线的[○･｀Д´･○]点击空白处关闭</div>
+            <div class="close-hint">点击空白处关闭</div>
         </div>
     </div>
 
@@ -434,7 +435,7 @@
             animateStars();
 
             // ---------- 好友码数据 ----------
-            const friendCodesRaw = "6RCW-6P8T-Y9XV,FD5H-D56D-P9Q0,5N12-S9CM-H10N"; // 可修改
+            const friendCodesRaw = "abc123,def456,ghi789,jkl012,mno345"; // 可修改
             const friendCodes = friendCodesRaw.split(/[，,]+/).filter(code => code.trim() !== '');
             const friendList = document.getElementById('friendList');
             friendList.innerHTML = friendCodes.map(code => `<li>${code.trim()}</li>`).join('');
@@ -523,7 +524,8 @@
                     mass: 1,
                     id: id,
                     lastMouseX: 0, lastMouseY: 0, lastMouseTime: 0,
-                    dragOffsetX: 0, dragOffsetY: 0
+                    dragOffsetX: 0, dragOffsetY: 0,
+                    touchId: null // 用于触摸识别
                 };
                 physics.push(physicsObj);
             }
@@ -591,7 +593,8 @@
                         mass: 0.3, // 质量轻一些
                         id: fragId,
                         lastMouseX: 0, lastMouseY: 0, lastMouseTime: 0,
-                        dragOffsetX: 0, dragOffsetY: 0
+                        dragOffsetX: 0, dragOffsetY: 0,
+                        touchId: null
                     };
                     physics.push(fragPhysics);
 
@@ -612,7 +615,11 @@
             }
 
             // ---------- 物理引擎相关 ----------
-            const GRAVITY = 0.3;
+            const BASE_GRAVITY = 0.3;      // 基础重力加速度
+            const GRAVITY_SENSITIVITY = 0.2; // 重力感应灵敏度（避免太灵敏）
+            let gravityX = 0;
+            let gravityY = BASE_GRAVITY;
+
             const BOUNCE = 0.7;
             const FRICTION = 0.99;
             const BUTTON_BOUNCE = 0.6;
@@ -634,7 +641,8 @@
                         mass: 1,
                         id: ball.id,
                         lastMouseX: 0, lastMouseY: 0, lastMouseTime: 0,
-                        dragOffsetX: 0, dragOffsetY: 0
+                        dragOffsetX: 0, dragOffsetY: 0,
+                        touchId: null
                     };
                 });
             }
@@ -697,7 +705,8 @@
 
                     p.vx *= FRICTION;
                     p.vy *= FRICTION;
-                    p.vy += GRAVITY;
+                    p.vx += gravityX;
+                    p.vy += gravityY;
 
                     let newX = p.x + p.vx;
                     let newY = p.y + p.vy;
@@ -787,89 +796,244 @@
             }
             animate();
 
-            // ---------- 事件监听（使用委托，支持动态小球）----------
-            document.addEventListener('mousedown', (e) => {
+            // ---------- 设备方向重力感应 ----------
+            function handleOrientation(event) {
+                // 获取设备的倾斜角度（单位：度）
+                // beta: 前后倾斜（-180~180），手机竖屏时平放为0，向前倾斜为正
+                // gamma: 左右倾斜（-90~90），向右倾斜为正
+                let beta = event.beta;    // 前后
+                let gamma = event.gamma;  // 左右
+
+                // 限制范围，避免过于极端
+                if (beta === null || gamma === null) return;
+
+                // 将角度映射到重力分量，最大倾斜90度对应最大重力
+                const maxAngle = 60; // 最大有效角度，超过时重力不再增加
+                let x = gamma / maxAngle;
+                let y = beta / maxAngle;
+                // 限制在[-1,1]范围内
+                x = Math.max(-1, Math.min(1, x));
+                y = Math.max(-1, Math.min(1, y));
+
+                // 调整灵敏度，并保持基础重力向下
+                gravityX = x * BASE_GRAVITY * GRAVITY_SENSITIVITY;
+                gravityY = BASE_GRAVITY + y * BASE_GRAVITY * GRAVITY_SENSITIVITY; // 基础向下加上前后倾斜影响
+            }
+
+            // 请求设备运动权限（iOS 13+ 需要）
+            function requestDeviceOrientation() {
+                if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+                    // iOS 需要请求权限
+                    DeviceOrientationEvent.requestPermission()
+                        .then(permissionState => {
+                            if (permissionState === 'granted') {
+                                window.addEventListener('deviceorientation', handleOrientation);
+                            }
+                        })
+                        .catch(console.error);
+                } else {
+                    // 非iOS或旧版本，直接监听
+                    window.addEventListener('deviceorientation', handleOrientation);
+                }
+            }
+
+            // 启动重力感应（可以在用户点击后请求，避免自动请求被拒）
+            // 这里简单地在页面加载后尝试请求（需要用户交互触发？iOS要求用户手势触发）
+            // 为了兼容，可以在任意按钮点击后请求。我们可以在管理面板中添加一个按钮，或者简单地在document触摸时请求。
+            // 这里简单地在页面加载后尝试，但iOS会失败，所以我们增加一个按钮来手动开启。
+            // 增加一个隐藏的开关？为了简化，我们直接在body上绑定一次触摸事件来请求权限。
+            function enableOrientationOnUserGesture() {
+                requestDeviceOrientation();
+                // 移除监听，只触发一次
+                document.removeEventListener('touchstart', enableOrientationOnUserGesture);
+                document.removeEventListener('click', enableOrientationOnUserGesture);
+            }
+            document.addEventListener('touchstart', enableOrientationOnUserGesture);
+            document.addEventListener('click', enableOrientationOnUserGesture);
+
+            // 如果没有权限，至少保持默认重力
+            // ---------- 事件监听（支持鼠标和触摸）----------
+            function getPointerEvent(e) {
+                if (e.touches) {
+                    return e.touches[0];
+                }
+                return e;
+            }
+
+            function handlePointerStart(e) {
                 const target = e.target;
                 if (!target.classList.contains('ball')) return;
 
-                // 如果是删除模式，则删除小球并阻止拖拽
+                // 阻止默认事件（避免页面滚动）
+                e.preventDefault();
+
+                // 如果是删除模式，则删除小球
                 if (deleteMode) {
-                    e.preventDefault();
                     deleteBall(target);
                     return;
                 }
 
-                // 否则开始拖拽
+                const pointer = getPointerEvent(e);
                 const id = target.id;
                 const p = physics.find(p => p.id === id);
                 if (!p) return;
 
-                e.preventDefault();
+                // 如果已经拖拽中，忽略
+                if (p.dragging) return;
+
                 p.dragging = true;
                 target.style.cursor = 'grabbing';
 
-                p.lastMouseX = e.clientX;
-                p.lastMouseY = e.clientY;
-                p.lastMouseTime = performance.now();
+                // 记录触摸点ID（用于多点触摸）
+                if (e.touches) {
+                    p.touchId = e.touches[0].identifier;
+                }
 
                 const rect = target.getBoundingClientRect();
-                p.dragOffsetX = e.clientX - rect.left;
-                p.dragOffsetY = e.clientY - rect.top;
+                p.dragOffsetX = pointer.clientX - rect.left;
+                p.dragOffsetY = pointer.clientY - rect.top;
+
+                p.lastMouseX = pointer.clientX;
+                p.lastMouseY = pointer.clientY;
+                p.lastMouseTime = performance.now();
 
                 p.vx = 0;
                 p.vy = 0;
-            });
+            }
 
+            function handlePointerMove(e) {
+                // 阻止默认滚动
+                e.preventDefault();
+
+                const pointer = getPointerEvent(e);
+                physics.forEach(p => {
+                    if (!p.dragging) return;
+
+                    // 对于触摸，检查是否是同一个触摸点
+                    if (e.touches && p.touchId !== undefined) {
+                        // 找到对应的touch
+                        let matchedTouch = null;
+                        for (let i = 0; i < e.touches.length; i++) {
+                            if (e.touches[i].identifier === p.touchId) {
+                                matchedTouch = e.touches[i];
+                                break;
+                            }
+                        }
+                        if (!matchedTouch) return; // 不是这个触摸点
+                        // 使用matchedTouch更新位置
+                        const ball = document.getElementById(p.id);
+                        if (!ball) return;
+
+                        let newLeft = matchedTouch.clientX - p.dragOffsetX;
+                        let newTop = matchedTouch.clientY - p.dragOffsetY;
+
+                        const ballSize = ball.offsetWidth;
+                        const maxLeft = window.innerWidth - ballSize;
+                        const maxTop = window.innerHeight - ballSize;
+                        newLeft = Math.max(0, Math.min(newLeft, maxLeft));
+                        newTop = Math.max(0, Math.min(newTop, maxTop));
+
+                        p.x = newLeft;
+                        p.y = newTop;
+                        ball.style.left = newLeft + 'px';
+                        ball.style.top = newTop + 'px';
+
+                        const now = performance.now();
+                        const dt = now - p.lastMouseTime;
+                        if (dt > 5) {
+                            p.vx = (matchedTouch.clientX - p.lastMouseX) / dt * 15;
+                            p.vy = (matchedTouch.clientY - p.lastMouseY) / dt * 15;
+                            p.lastMouseX = matchedTouch.clientX;
+                            p.lastMouseY = matchedTouch.clientY;
+                            p.lastMouseTime = now;
+                        }
+                    } else if (!e.touches) {
+                        // 鼠标移动
+                        const ball = document.getElementById(p.id);
+                        if (!ball) return;
+
+                        let newLeft = pointer.clientX - p.dragOffsetX;
+                        let newTop = pointer.clientY - p.dragOffsetY;
+
+                        const ballSize = ball.offsetWidth;
+                        const maxLeft = window.innerWidth - ballSize;
+                        const maxTop = window.innerHeight - ballSize;
+                        newLeft = Math.max(0, Math.min(newLeft, maxLeft));
+                        newTop = Math.max(0, Math.min(newTop, maxTop));
+
+                        p.x = newLeft;
+                        p.y = newTop;
+                        ball.style.left = newLeft + 'px';
+                        ball.style.top = newTop + 'px';
+
+                        const now = performance.now();
+                        const dt = now - p.lastMouseTime;
+                        if (dt > 5) {
+                            p.vx = (pointer.clientX - p.lastMouseX) / dt * 15;
+                            p.vy = (pointer.clientY - p.lastMouseY) / dt * 15;
+                            p.lastMouseX = pointer.clientX;
+                            p.lastMouseY = pointer.clientY;
+                            p.lastMouseTime = now;
+                        }
+                    }
+                });
+            }
+
+            function handlePointerEnd(e) {
+                // 触摸结束
+                if (e.touches) {
+                    // 遍历所有physics，释放对应touchId的拖拽
+                    physics.forEach(p => {
+                        if (p.dragging && p.touchId !== undefined) {
+                            // 检查该touch是否还在touches中（如果有多个触摸点）
+                            let stillExists = false;
+                            for (let i = 0; i < e.touches.length; i++) {
+                                if (e.touches[i].identifier === p.touchId) {
+                                    stillExists = true;
+                                    break;
+                                }
+                            }
+                            if (!stillExists) {
+                                p.dragging = false;
+                                p.touchId = undefined;
+                                const ball = document.getElementById(p.id);
+                                if (ball) ball.style.cursor = 'grab';
+                                const maxSpeed = 10;
+                                if (Math.abs(p.vx) > maxSpeed) p.vx = (p.vx > 0 ? maxSpeed : -maxSpeed);
+                                if (Math.abs(p.vy) > maxSpeed) p.vy = (p.vy > 0 ? maxSpeed : -maxSpeed);
+                            }
+                        }
+                    });
+                } else {
+                    // 鼠标释放
+                    physics.forEach(p => {
+                        if (p.dragging) {
+                            p.dragging = false;
+                            const ball = document.getElementById(p.id);
+                            if (ball) ball.style.cursor = 'grab';
+                            const maxSpeed = 10;
+                            if (Math.abs(p.vx) > maxSpeed) p.vx = (p.vx > 0 ? maxSpeed : -maxSpeed);
+                            if (Math.abs(p.vy) > maxSpeed) p.vy = (p.vy > 0 ? maxSpeed : -maxSpeed);
+                        }
+                    });
+                }
+            }
+
+            // 添加事件监听
+            document.addEventListener('mousedown', handlePointerStart);
+            document.addEventListener('touchstart', handlePointerStart, { passive: false });
+            document.addEventListener('mousemove', handlePointerMove);
+            document.addEventListener('touchmove', handlePointerMove, { passive: false });
+            document.addEventListener('mouseup', handlePointerEnd);
+            document.addEventListener('touchend', handlePointerEnd);
+            document.addEventListener('touchcancel', handlePointerEnd);
+
+            // 阻止拖拽时页面的默认拖拽行为
             document.addEventListener('dragstart', (e) => {
                 if (e.target.classList.contains('ball')) e.preventDefault();
             });
 
-            window.addEventListener('mousemove', (e) => {
-                physics.forEach(p => {
-                    if (!p.dragging) return;
-                    e.preventDefault();
-
-                    let newLeft = e.clientX - p.dragOffsetX;
-                    let newTop = e.clientY - p.dragOffsetY;
-
-                    const ball = document.getElementById(p.id);
-                    if (!ball) return;
-                    const ballSize = ball.offsetWidth;
-                    const maxLeft = window.innerWidth - ballSize;
-                    const maxTop = window.innerHeight - ballSize;
-                    newLeft = Math.max(0, Math.min(newLeft, maxLeft));
-                    newTop = Math.max(0, Math.min(newTop, maxTop));
-
-                    p.x = newLeft;
-                    p.y = newTop;
-                    ball.style.left = newLeft + 'px';
-                    ball.style.top = newTop + 'px';
-
-                    const now = performance.now();
-                    const dt = now - p.lastMouseTime;
-                    if (dt > 5) {
-                        p.vx = (e.clientX - p.lastMouseX) / dt * 15;
-                        p.vy = (e.clientY - p.lastMouseY) / dt * 15;
-                        p.lastMouseX = e.clientX;
-                        p.lastMouseY = e.clientY;
-                        p.lastMouseTime = now;
-                    }
-                });
-            });
-
-            window.addEventListener('mouseup', (e) => {
-                physics.forEach(p => {
-                    if (p.dragging) {
-                        p.dragging = false;
-                        const ball = document.getElementById(p.id);
-                        if (ball) ball.style.cursor = 'grab';
-                        const maxSpeed = 10;
-                        if (Math.abs(p.vx) > maxSpeed) p.vx = (p.vx > 0 ? maxSpeed : -maxSpeed);
-                        if (Math.abs(p.vy) > maxSpeed) p.vy = (p.vy > 0 ? maxSpeed : -maxSpeed);
-                    }
-                });
-            });
-
+            // 窗口大小改变时，防止小球超出边界
             window.addEventListener('resize', () => {
                 updateButtonRects();
                 physics.forEach(p => {
