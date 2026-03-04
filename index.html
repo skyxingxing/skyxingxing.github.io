@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>sky星星的网页</title>
+    <!-- 引入不蒜子计数器脚本 -->
+    <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
     <style>
         /* 全局设置 */
         body {
@@ -287,6 +289,25 @@
             cursor: grabbing;
         }
 
+        /* 访问计数器 */
+        .visit-counter {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            color: white;
+            padding: 8px 18px;
+            border-radius: 40px;
+            font-size: 16px;
+            z-index: 100;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            pointer-events: none; /* 让计数器不干扰点击 */
+            font-family: 'Microsoft YaHei', sans-serif;
+            letter-spacing: 1px;
+        }
+
         @media (max-width: 768px) {
             .pure-title {
                 font-size: 32px;
@@ -318,6 +339,12 @@
                 font-size: 14px;
                 padding: 8px 12px;
             }
+            .visit-counter {
+                bottom: 10px;
+                right: 10px;
+                font-size: 14px;
+                padding: 6px 12px;
+            }
         }
     </style>
 </head>
@@ -334,7 +361,7 @@
 
     <div class="button-container">
         <button class="liquid-glass-btn collidable-btn" onclick="window.open('https://www.douyin.com/user/MS4wLjABAAAAJJh4FxMqbYWsxMzsWNA6-loe2r78IwfbvLA7GK3JiA8PI_IKH7OGeleF4TY_ikOb?from_tab_name=main', '_blank')">
-            星星的抖音
+            去星星的抖音
         </button>
         <button class="liquid-glass-btn collidable-btn" id="friendBtn">
             添加星星的好友
@@ -360,6 +387,11 @@
             <ul class="friend-list" id="friendList"></ul>
             <div class="close-hint">我也是有底线的[○･｀Д´･○]点击空白处关闭</div>
         </div>
+    </div>
+
+    <!-- 访问计数器（使用不蒜子） -->
+    <div class="visit-counter">
+        👁️ 总访问人次：<span id="busuanzi_value_site_pv"></span>
     </div>
 
     <script>
@@ -868,6 +900,7 @@
                         const ball = document.getElementById(p.id);
                         if (!ball) return;
                         const ballSize = ball.offsetWidth;
+                        // 简单判断：如果是液态球（ball-liquid）靠左，否则靠右
                         if (ball.classList.contains('ball-liquid')) {
                             p.x = 10;
                         } else {
