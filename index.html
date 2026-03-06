@@ -3,11 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>sky星星的网页</title>
-    <!-- 引入不蒜子计数器脚本 -->
+    <title>星星的网页</title>
+    <!-- 不蒜子计数器 -->
     <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
     <style>
-        /* 全局设置 */
+        /* ========== 全局样式 ========== */
+        * {
+            box-sizing: border-box;
+        }
         body {
             margin: 0;
             overflow: hidden;
@@ -20,7 +23,7 @@
             background-color: #0a0c10;
         }
 
-        /* 画布：用于绘制闪烁的星星 */
+        /* 星星画布 */
         #starCanvas {
             display: block;
             position: fixed;
@@ -32,7 +35,7 @@
             pointer-events: none;
         }
 
-        /* 标题容器 */
+        /* 标题 */
         .title-container {
             position: fixed;
             top: 20px;
@@ -44,8 +47,6 @@
             opacity: 0;
             animation: titleRise 2s ease-out forwards;
         }
-
-        /* 标题纯文字 */
         .pure-title {
             display: inline-block;
             font-size: 48px;
@@ -54,19 +55,12 @@
             text-shadow: 0 0 20px rgba(255, 255, 255, 0.8);
             letter-spacing: 4px;
         }
-
         @keyframes titleRise {
-            0% {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            100% {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            0% { opacity: 0; transform: translateY(30px); }
+            100% { opacity: 1; transform: translateY(0); }
         }
 
-        /* 按钮容器 */
+        /* 主按钮容器 */
         .button-container {
             position: fixed;
             top: 50%;
@@ -79,11 +73,7 @@
             gap: 30px;
         }
 
-        .collidable-btn {
-            /* 仅用于标识碰撞箱 */
-        }
-
-        /* 液态玻璃按钮 */
+        /* 液态玻璃按钮通用 */
         .liquid-glass-btn {
             display: inline-block;
             padding: 18px 45px;
@@ -103,7 +93,6 @@
             cursor: pointer;
             text-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
         }
-
         .liquid-glass-btn:hover {
             transform: scale(1.05);
             background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0.15) 70%);
@@ -113,7 +102,6 @@
                 inset -3px -3px 8px rgba(0, 0, 0, 0.15);
             border-color: rgba(255, 255, 255, 0.6);
         }
-
         .liquid-glass-btn:active {
             transform: scale(0.98);
         }
@@ -170,7 +158,7 @@
             transition: filter 0.1s;
         }
 
-        /* 模态框遮罩 */
+        /* 模态框通用样式 */
         .modal-overlay {
             position: fixed;
             top: 0;
@@ -185,7 +173,6 @@
             pointer-events: auto;
             backdrop-filter: blur(2px);
         }
-
         .modal-content {
             width: 80%;
             max-width: 400px;
@@ -200,22 +187,18 @@
             transition: transform 0.4s ease-out;
             overflow-y: auto;
         }
-
         .modal-overlay.show .modal-content {
             transform: translateY(0);
         }
-
         .modal-overlay.hide .modal-content {
             transform: translateY(100%);
         }
-
         .friend-list {
             list-style: none;
             padding: 0;
             margin: 20px 0 0;
             text-align: left;
         }
-
         .friend-list li {
             background: rgba(255, 255, 255, 0.1);
             border-radius: 40px;
@@ -227,7 +210,6 @@
             color: white;
             text-shadow: 0 1px 2px rgba(0,0,0,0.5);
         }
-
         .modal-title {
             font-size: 28px;
             font-weight: bold;
@@ -235,14 +217,12 @@
             margin-bottom: 5px;
             text-shadow: 0 2px 5px rgba(0,0,0,0.5);
         }
-
         .modal-sub {
             text-align: center;
             font-size: 16px;
             opacity: 0.8;
             margin-top: -5px;
         }
-
         .close-hint {
             text-align: center;
             font-size: 14px;
@@ -251,7 +231,7 @@
             font-style: italic;
         }
 
-        /* 小球样式 */
+        /* 主页小球样式 */
         .ball {
             position: fixed;
             width: 80px;
@@ -263,9 +243,8 @@
             box-shadow: 0 10px 20px rgba(0,0,0,0.3);
             will-change: left, top;
             transition: box-shadow 0.1s;
-            touch-action: none; /* 禁止触摸时页面滚动 */
+            touch-action: none; /* 防止触摸滚动 */
         }
-
         .ball-liquid {
             background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.8) 5%, rgba(255, 255, 255, 0.2) 60%, rgba(255, 255, 255, 0) 80%);
             background-color: rgba(100, 200, 255, 0.3);
@@ -275,7 +254,6 @@
                 inset 5px 5px 10px rgba(255, 255, 255, 0.6),
                 inset -5px -5px 10px rgba(0, 0, 0, 0.2);
         }
-
         .ball-frosted {
             background: rgba(255, 255, 255, 0.2);
             backdrop-filter: blur(10px);
@@ -285,7 +263,6 @@
                 0 0 30px rgba(255, 255, 255, 0.2),
                 inset 0 0 20px rgba(255, 255, 255, 0.5);
         }
-
         .ball:active {
             cursor: grabbing;
         }
@@ -309,57 +286,117 @@
             letter-spacing: 1px;
         }
 
+        /* 游戏菜单 */
+        .game-menu-content {
+            text-align: center;
+        }
+        .game-menu-btn {
+            background: rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,255,255,0.4);
+            color: white;
+            padding: 15px 30px;
+            border-radius: 60px;
+            font-size: 24px;
+            margin: 20px 0;
+            cursor: pointer;
+            transition: all 0.3s;
+            width: 100%;
+        }
+        .game-menu-btn:hover {
+            background: rgba(255,255,255,0.4);
+            transform: scale(1.05);
+        }
+
+        /* 游戏容器 */
+        #gameContainer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 30;
+            display: none;
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(10px);
+            color: white;
+            overflow: hidden;
+        }
+        #gameCanvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            background: transparent;
+        }
+        .game-ui {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 31;
+            pointer-events: none;
+        }
+        .game-ui button {
+            pointer-events: auto;
+            background: rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,255,255,0.4);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 40px;
+            font-size: 18px;
+            cursor: pointer;
+            backdrop-filter: blur(5px);
+        }
+        .score {
+            background: rgba(0,0,0,0.5);
+            padding: 10px 20px;
+            border-radius: 40px;
+            font-size: 20px;
+        }
+        #addGameBallBtn {
+            position: absolute;
+            bottom: 30px;
+            left: 20px;
+            background: rgba(255,255,255,0.2);
+            border: 1px solid white;
+            color: white;
+            padding: 12px 25px;
+            border-radius: 40px;
+            font-size: 18px;
+            backdrop-filter: blur(5px);
+            cursor: pointer;
+            z-index: 31;
+        }
+
         @media (max-width: 768px) {
-            .pure-title {
-                font-size: 32px;
-            }
-            .liquid-glass-btn {
-                font-size: 22px;
-                padding: 15px 35px;
-            }
-            .modal-content {
-                width: 90%;
-                padding: 20px;
-            }
-            .friend-list li {
-                font-size: 16px;
-                padding: 10px 15px;
-            }
-            .ball {
-                width: 60px;
-                height: 60px;
-            }
-            .manage-panel {
-                top: 65%;
-                padding: 10px 15px;
-                gap: 10px;
-                flex-wrap: wrap;
-                justify-content: center;
-            }
-            .manage-btn {
-                font-size: 14px;
-                padding: 8px 12px;
-            }
-            .visit-counter {
-                bottom: 10px;
-                right: 10px;
-                font-size: 14px;
-                padding: 6px 12px;
-            }
+            .pure-title { font-size: 32px; }
+            .liquid-glass-btn { font-size: 22px; padding: 15px 35px; }
+            .modal-content { width: 90%; padding: 20px; }
+            .friend-list li { font-size: 16px; padding: 10px 15px; }
+            .ball { width: 60px; height: 60px; }
+            .manage-panel { top: 65%; padding: 10px 15px; gap: 10px; flex-wrap: wrap; justify-content: center; }
+            .manage-btn { font-size: 14px; padding: 8px 12px; }
+            .visit-counter { bottom: 10px; right: 10px; font-size: 14px; padding: 6px 12px; }
+            .game-menu-btn { font-size: 20px; padding: 12px 25px; }
         }
     </style>
 </head>
 <body>
+    <!-- 星星画布 -->
     <canvas id="starCanvas"></canvas>
 
     <!-- 初始两个小球 -->
     <div class="ball ball-liquid" id="ballLiquid"></div>
     <div class="ball ball-frosted" id="ballFrosted"></div>
 
+    <!-- 标题 -->
     <div class="title-container">
         <div class="pure-title">✨ 欢迎来到星星的网页 ✨</div>
     </div>
 
+    <!-- 主按钮容器 -->
     <div class="button-container">
         <button class="liquid-glass-btn collidable-btn" onclick="window.open('https://www.douyin.com/user/MS4wLjABAAAAJJh4FxMqbYWsxMzsWNA6-loe2r78IwfbvLA7GK3JiA8PI_IKH7OGeleF4TY_ikOb?from_tab_name=main', '_blank')">
             去星星的抖音
@@ -367,20 +404,22 @@
         <button class="liquid-glass-btn collidable-btn" id="friendBtn">
             添加星星的好友
         </button>
-        <!-- 新增管理小球按钮 -->
         <button class="liquid-glass-btn collidable-btn" id="manageBallBtn">
             管理小球
         </button>
+        <button class="liquid-glass-btn collidable-btn" id="gameMenuBtn">
+            🎮小游戏
+        </button>
     </div>
 
-    <!-- 管理面板（默认隐藏） -->
+    <!-- 管理面板 -->
     <div class="manage-panel" id="managePanel">
         <button class="manage-btn" id="deleteModeBtn">🔨 删除模式</button>
         <button class="manage-btn" id="addLiquidBtn">➕ 新增液态球</button>
         <button class="manage-btn" id="addFrostedBtn">➕ 新增磨砂球</button>
     </div>
 
-    <!-- 模态框（好友码） -->
+    <!-- 好友码模态框 -->
     <div class="modal-overlay" id="modalOverlay">
         <div class="modal-content">
             <div class="modal-title">星星的好友码</div>
@@ -390,17 +429,36 @@
         </div>
     </div>
 
-    <!-- 访问计数器（使用不蒜子） -->
+    <!-- 游戏菜单模态框 -->
+    <div class="modal-overlay" id="gameMenuOverlay">
+        <div class="modal-content game-menu-content">
+            <div class="modal-title">🎮 选择游戏</div>
+            <div class="game-menu-btn" id="curlingGameBtn">🥌 冰壶游戏</div>
+            <div class="close-hint">点击空白处关闭</div>
+        </div>
+    </div>
+
+    <!-- 游戏容器 -->
+    <div id="gameContainer">
+        <canvas id="gameCanvas"></canvas>
+        <div class="game-ui">
+            <button id="backToHomeBtn">⬅️ 返回主页</button>
+            <div class="score" id="gameScore">得分: 0</div>
+        </div>
+        <button id="addGameBallBtn">➕ 增加冰球</button>
+    </div>
+
+    <!-- 访问计数器 -->
     <div class="visit-counter">
         👁️ 总访问人次：<span id="busuanzi_value_site_pv"></span>
     </div>
 
     <script>
         (function() {
-            // ---------- 闪烁星星动画 ----------
+            // ==================== 主页功能 ====================
+            // 星星动画
             const canvas = document.getElementById('starCanvas');
             const ctx = canvas.getContext('2d');
-
             function resizeCanvas() {
                 canvas.width = window.innerWidth;
                 canvas.height = window.innerHeight;
@@ -419,7 +477,6 @@
                     speed: 0.002 + Math.random() * 0.005
                 });
             }
-
             function animateStars() {
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
                 stars.forEach(star => {
@@ -434,222 +491,59 @@
             }
             animateStars();
 
-            // ---------- 好友码数据 ----------
-            const friendCodesRaw = "6RCW-6P8T-Y9XV,FD5H-D56D-P9Q0,5N12-S9CM-H10N"; // 可修改
+            // 好友码数据
+            const friendCodesRaw = "6RCW-6P8T-Y9XV,FD5H-D56D-P9Q0,5N12-S9CM-H10N";
             const friendCodes = friendCodesRaw.split(/[，,]+/).filter(code => code.trim() !== '');
             const friendList = document.getElementById('friendList');
             friendList.innerHTML = friendCodes.map(code => `<li>${code.trim()}</li>`).join('');
 
-            // ---------- 模态框逻辑 ----------
+            // 模态框控制
             const modalOverlay = document.getElementById('modalOverlay');
             const friendBtn = document.getElementById('friendBtn');
-
             let isModalOpen = false;
             let hideTimeout = null;
 
-            // 获取小球元素（动态数组，会变化）
+            function openModal() {
+                if (isModalOpen) return;
+                if (hideTimeout) clearTimeout(hideTimeout);
+                modalOverlay.classList.remove('hide');
+                modalOverlay.style.display = 'flex';
+                void modalOverlay.offsetWidth;
+                modalOverlay.classList.add('show');
+                isModalOpen = true;
+            }
+            function closeModal() {
+                if (!isModalOpen) return;
+                modalOverlay.classList.remove('show');
+                modalOverlay.classList.add('hide');
+                hideTimeout = setTimeout(() => {
+                    modalOverlay.style.display = 'none';
+                    modalOverlay.classList.remove('hide');
+                    isModalOpen = false;
+                    hideTimeout = null;
+                }, 400);
+            }
+            friendBtn.addEventListener('click', openModal);
+            modalOverlay.addEventListener('click', (e) => {
+                if (e.target === modalOverlay) closeModal();
+            });
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && isModalOpen) closeModal();
+            });
+
+            // 小球物理引擎
             const ballLiquid = document.getElementById('ballLiquid');
             const ballFrosted = document.getElementById('ballFrosted');
-            let balls = [ballLiquid, ballFrosted]; // 后续会动态更新
+            let balls = [ballLiquid, ballFrosted];
 
-            // ---------- 管理小球相关 ----------
-            const manageBtn = document.getElementById('manageBallBtn');
-            const managePanel = document.getElementById('managePanel');
-            const deleteModeBtn = document.getElementById('deleteModeBtn');
-            const addLiquidBtn = document.getElementById('addLiquidBtn');
-            const addFrostedBtn = document.getElementById('addFrostedBtn');
-
-            let deleteMode = false; // 是否处于删除模式
-
-            // 显示/隐藏管理面板
-            manageBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                managePanel.classList.toggle('show');
-            });
-
-            // 点击其他地方隐藏管理面板
-            document.addEventListener('click', (e) => {
-                if (!managePanel.contains(e.target) && e.target !== manageBtn) {
-                    managePanel.classList.remove('show');
-                }
-            });
-
-            // 删除模式切换
-            deleteModeBtn.addEventListener('click', () => {
-                deleteMode = !deleteMode;
-                deleteModeBtn.classList.toggle('active', deleteMode);
-                if (deleteMode) {
-                    document.body.classList.add('delete-mode');
-                } else {
-                    document.body.classList.remove('delete-mode');
-                }
-            });
-
-            // 新增液态玻璃球
-            addLiquidBtn.addEventListener('click', () => {
-                createNewBall('liquid');
-            });
-
-            // 新增磨砂玻璃球
-            addFrostedBtn.addEventListener('click', () => {
-                createNewBall('frosted');
-            });
-
-            // 创建新球的函数
-            function createNewBall(type) {
-                const id = 'ball_' + Date.now() + '_' + Math.random().toString(36).substr(2, 8);
-                const ballDiv = document.createElement('div');
-                ballDiv.className = `ball ball-${type}`;
-                ballDiv.id = id;
-                document.body.appendChild(ballDiv);
-
-                const ballSize = 80; // 与CSS一致
-                const maxLeft = window.innerWidth - ballSize;
-                const left = Math.random() * maxLeft;
-                const top = -100; // 从上方掉下
-
-                ballDiv.style.left = left + 'px';
-                ballDiv.style.top = top + 'px';
-
-                balls.push(ballDiv);
-
-                const radius = ballSize / 2;
-                const physicsObj = {
-                    x: left,
-                    y: top,
-                    vx: (Math.random() - 0.5) * 2,
-                    vy: Math.random() * 2,
-                    radius: radius,
-                    dragging: false,
-                    mass: 1,
-                    id: id,
-                    lastMouseX: 0, lastMouseY: 0, lastMouseTime: 0,
-                    dragOffsetX: 0, dragOffsetY: 0,
-                    touchId: null // 用于触摸识别
-                };
-                physics.push(physicsObj);
-            }
-
-            // ---------- 删除小球（带破碎效果）----------
-            function deleteBall(ballElement) {
-                const id = ballElement.id;
-                // 找到对应的物理对象
-                const pIndex = physics.findIndex(p => p.id === id);
-                if (pIndex === -1) return;
-                const p = physics[pIndex];
-
-                // 获取小球的类型（液态还是磨砂）
-                const isLiquid = ballElement.classList.contains('ball-liquid');
-                const type = isLiquid ? 'liquid' : 'frosted';
-
-                // 原球的位置、速度、半径
-                const x = p.x;
-                const y = p.y;
-                const vx = p.vx;
-                const vy = p.vy;
-                const originalRadius = p.radius;
-
-                // 从物理数组和DOM移除原球
-                physics.splice(pIndex, 1);
-                const ballIndex = balls.findIndex(b => b.id === id);
-                if (ballIndex !== -1) balls.splice(ballIndex, 1);
-                ballElement.remove();
-
-                // 生成碎片：4~6个
-                const fragmentCount = 4 + Math.floor(Math.random() * 3); // 4~6
-                for (let i = 0; i < fragmentCount; i++) {
-                    // 碎片半径：原半径的0.2~0.4
-                    const fragRadius = originalRadius * (0.2 + Math.random() * 0.2);
-                    // 碎片位置：在原球中心附近随机偏移
-                    const angle = Math.random() * Math.PI * 2;
-                    const dist = originalRadius * 0.5 * Math.random();
-                    const fragX = x + Math.cos(angle) * dist;
-                    const fragY = y + Math.sin(angle) * dist;
-
-                    // 碎片速度：在原球速度基础上加随机
-                    const fragVx = vx + (Math.random() - 0.5) * 4;
-                    const fragVy = vy + (Math.random() - 0.5) * 4 - 2; // 略微向上飘散
-
-                    // 创建碎片DOM
-                    const fragId = 'frag_' + Date.now() + '_' + Math.random().toString(36).substr(2, 8);
-                    const fragDiv = document.createElement('div');
-                    fragDiv.className = `ball ball-${type}`; // 继承原球样式
-                    fragDiv.id = fragId;
-                    fragDiv.style.width = (fragRadius * 2) + 'px';
-                    fragDiv.style.height = (fragRadius * 2) + 'px';
-                    fragDiv.style.left = fragX + 'px';
-                    fragDiv.style.top = fragY + 'px';
-                    document.body.appendChild(fragDiv);
-                    balls.push(fragDiv);
-
-                    // 碎片物理对象
-                    const fragPhysics = {
-                        x: fragX,
-                        y: fragY,
-                        vx: fragVx,
-                        vy: fragVy,
-                        radius: fragRadius,
-                        dragging: false,
-                        mass: 0.3, // 质量轻一些
-                        id: fragId,
-                        lastMouseX: 0, lastMouseY: 0, lastMouseTime: 0,
-                        dragOffsetX: 0, dragOffsetY: 0,
-                        touchId: null
-                    };
-                    physics.push(fragPhysics);
-
-                    // 设置定时器，2秒后移除碎片
-                    setTimeout(() => {
-                        const idx = physics.findIndex(fp => fp.id === fragId);
-                        if (idx !== -1) {
-                            physics.splice(idx, 1);
-                        }
-                        const ballIdx = balls.findIndex(b => b.id === fragId);
-                        if (ballIdx !== -1) {
-                            balls.splice(ballIdx, 1);
-                        }
-                        const fragElem = document.getElementById(fragId);
-                        if (fragElem) fragElem.remove();
-                    }, 2000);
-                }
-            }
-
-            // ---------- 物理引擎相关 ----------
-            const BASE_GRAVITY = 0.3;      // 基础重力加速度
-            const GRAVITY_SENSITIVITY = 0.2; // 重力感应灵敏度（避免太灵敏）
-            let gravityX = 0;
-            let gravityY = BASE_GRAVITY;
-
+            const GRAVITY = 0.3;
             const BOUNCE = 0.7;
             const FRICTION = 0.99;
             const BUTTON_BOUNCE = 0.6;
 
-            const physics = [];
-
-            // 初始化两个小球的物理状态
-            function initPhysics() {
-                balls.forEach((ball, idx) => {
-                    const rect = ball.getBoundingClientRect();
-                    const radius = rect.width / 2;
-                    physics[idx] = {
-                        x: parseFloat(ball.style.left) || rect.left,
-                        y: parseFloat(ball.style.top) || rect.top,
-                        vx: (Math.random() - 0.5) * 2,
-                        vy: Math.random() * 2,
-                        radius: radius,
-                        dragging: false,
-                        mass: 1,
-                        id: ball.id,
-                        lastMouseX: 0, lastMouseY: 0, lastMouseTime: 0,
-                        dragOffsetX: 0, dragOffsetY: 0,
-                        touchId: null
-                    };
-                });
-            }
-            initPhysics();
-
-            const collidableBtns = document.querySelectorAll('.collidable-btn');
+            let physics = [];
             let buttonRects = [];
+            const collidableBtns = document.querySelectorAll('.collidable-btn');
 
             function updateButtonRects() {
                 buttonRects = Array.from(collidableBtns).map(btn => {
@@ -670,7 +564,6 @@
             function handleCollisionWithButton(p, rect) {
                 const closestX = Math.max(rect.left, Math.min(p.x, rect.right));
                 const closestY = Math.max(rect.top, Math.min(p.y, rect.bottom));
-
                 const dx = p.x - closestX;
                 const dy = p.y - closestY;
                 const dist = Math.sqrt(dx * dx + dy * dy);
@@ -679,11 +572,9 @@
                 if (dist < minDist && dist > 0.001) {
                     const nx = dx / dist;
                     const ny = dy / dist;
-
                     const overlap = minDist - dist;
                     p.x += nx * overlap;
                     p.y += ny * overlap;
-
                     const vn = p.vx * nx + p.vy * ny;
                     if (vn < 0) {
                         const vt_x = p.vx - vn * nx;
@@ -696,13 +587,71 @@
                 return false;
             }
 
+            function initPhysics() {
+                physics = [];
+                balls.forEach((ball, idx) => {
+                    const rect = ball.getBoundingClientRect();
+                    const radius = rect.width / 2;
+                    physics.push({
+                        x: parseFloat(ball.style.left) || rect.left,
+                        y: parseFloat(ball.style.top) || rect.top,
+                        vx: (Math.random() - 0.5) * 2,
+                        vy: Math.random() * 2,
+                        radius: radius,
+                        dragging: false,
+                        mass: 1,
+                        id: ball.id,
+                        lastMouseX: 0, lastMouseY: 0, lastMouseTime: 0,
+                        dragOffsetX: 0, dragOffsetY: 0,
+                        touchId: null
+                    });
+                });
+            }
+            initPhysics();
+
+            // 重力感应
+            let gravityX = 0, gravityY = GRAVITY;
+            const GRAVITY_SENSITIVITY = 0.2;
+            function handleOrientation(event) {
+                let beta = event.beta;   // 前后
+                let gamma = event.gamma;  // 左右
+                if (beta === null || gamma === null) return;
+                const maxAngle = 60;
+                let x = gamma / maxAngle;
+                let y = beta / maxAngle;
+                x = Math.max(-1, Math.min(1, x));
+                y = Math.max(-1, Math.min(1, y));
+                gravityX = x * GRAVITY * GRAVITY_SENSITIVITY;
+                gravityY = GRAVITY + y * GRAVITY * GRAVITY_SENSITIVITY;
+            }
+            function requestDeviceOrientation() {
+                if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+                    DeviceOrientationEvent.requestPermission()
+                        .then(permissionState => {
+                            if (permissionState === 'granted') {
+                                window.addEventListener('deviceorientation', handleOrientation);
+                            }
+                        })
+                        .catch(console.error);
+                } else {
+                    window.addEventListener('deviceorientation', handleOrientation);
+                }
+            }
+            function enableOrientationOnUserGesture() {
+                requestDeviceOrientation();
+                document.removeEventListener('touchstart', enableOrientationOnUserGesture);
+                document.removeEventListener('click', enableOrientationOnUserGesture);
+            }
+            document.addEventListener('touchstart', enableOrientationOnUserGesture);
+            document.addEventListener('click', enableOrientationOnUserGesture);
+
+            // 物理更新
             function updatePhysics() {
                 const width = window.innerWidth;
                 const height = window.innerHeight;
 
-                physics.forEach((p, idx) => {
+                physics.forEach(p => {
                     if (p.dragging) return;
-
                     p.vx *= FRICTION;
                     p.vy *= FRICTION;
                     p.vx += gravityX;
@@ -710,13 +659,11 @@
 
                     let newX = p.x + p.vx;
                     let newY = p.y + p.vy;
-
                     const r = p.radius;
                     if (newX < r) { newX = r; p.vx = -p.vx * BOUNCE; }
                     if (newX > width - r) { newX = width - r; p.vx = -p.vx * BOUNCE; }
                     if (newY < r) { newY = r; p.vy = -p.vy * BOUNCE; }
                     if (newY > height - r) { newY = height - r; p.vy = -p.vy * BOUNCE; }
-
                     p.x = newX;
                     p.y = newY;
 
@@ -736,7 +683,7 @@
 
                         const dx = p2.x - p1.x;
                         const dy = p2.y - p1.y;
-                        const dist = Math.sqrt(dx * dx + dy * dy);
+                        const dist = Math.sqrt(dx*dx + dy*dy);
                         const minDist = p1.radius + p2.radius;
 
                         if (dist < minDist && dist > 0.001) {
@@ -790,128 +737,48 @@
                 });
             }
 
-            function animate() {
-                updatePhysics();
-                requestAnimationFrame(animate);
-            }
-            animate();
-
-            // ---------- 设备方向重力感应 ----------
-            function handleOrientation(event) {
-                // 获取设备的倾斜角度（单位：度）
-                // beta: 前后倾斜（-180~180），手机竖屏时平放为0，向前倾斜为正
-                // gamma: 左右倾斜（-90~90），向右倾斜为正
-                let beta = event.beta;    // 前后
-                let gamma = event.gamma;  // 左右
-
-                // 限制范围，避免过于极端
-                if (beta === null || gamma === null) return;
-
-                // 将角度映射到重力分量，最大倾斜90度对应最大重力
-                const maxAngle = 60; // 最大有效角度，超过时重力不再增加
-                let x = gamma / maxAngle;
-                let y = beta / maxAngle;
-                // 限制在[-1,1]范围内
-                x = Math.max(-1, Math.min(1, x));
-                y = Math.max(-1, Math.min(1, y));
-
-                // 调整灵敏度，并保持基础重力向下
-                gravityX = x * BASE_GRAVITY * GRAVITY_SENSITIVITY;
-                gravityY = BASE_GRAVITY + y * BASE_GRAVITY * GRAVITY_SENSITIVITY; // 基础向下加上前后倾斜影响
-            }
-
-            // 请求设备运动权限（iOS 13+ 需要）
-            function requestDeviceOrientation() {
-                if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-                    // iOS 需要请求权限
-                    DeviceOrientationEvent.requestPermission()
-                        .then(permissionState => {
-                            if (permissionState === 'granted') {
-                                window.addEventListener('deviceorientation', handleOrientation);
-                            }
-                        })
-                        .catch(console.error);
-                } else {
-                    // 非iOS或旧版本，直接监听
-                    window.addEventListener('deviceorientation', handleOrientation);
-                }
-            }
-
-            // 启动重力感应（可以在用户点击后请求，避免自动请求被拒）
-            // 这里简单地在页面加载后尝试请求（需要用户交互触发？iOS要求用户手势触发）
-            // 为了兼容，可以在任意按钮点击后请求。我们可以在管理面板中添加一个按钮，或者简单地在document触摸时请求。
-            // 这里简单地在页面加载后尝试，但iOS会失败，所以我们增加一个按钮来手动开启。
-            // 增加一个隐藏的开关？为了简化，我们直接在body上绑定一次触摸事件来请求权限。
-            function enableOrientationOnUserGesture() {
-                requestDeviceOrientation();
-                // 移除监听，只触发一次
-                document.removeEventListener('touchstart', enableOrientationOnUserGesture);
-                document.removeEventListener('click', enableOrientationOnUserGesture);
-            }
-            document.addEventListener('touchstart', enableOrientationOnUserGesture);
-            document.addEventListener('click', enableOrientationOnUserGesture);
-
-            // 如果没有权限，至少保持默认重力
-            // ---------- 事件监听（支持鼠标和触摸）----------
+            // 拖拽处理（鼠标+触摸）
             function getPointerEvent(e) {
-                if (e.touches) {
-                    return e.touches[0];
-                }
+                if (e.touches) return e.touches[0];
                 return e;
             }
-
             function handlePointerStart(e) {
                 const target = e.target;
                 if (!target.classList.contains('ball')) return;
-
-                // 阻止默认事件（避免页面滚动）
                 e.preventDefault();
 
-                // 如果是删除模式，则删除小球
+                // 删除模式
                 if (deleteMode) {
                     deleteBall(target);
                     return;
                 }
 
-                const pointer = getPointerEvent(e);
                 const id = target.id;
                 const p = physics.find(p => p.id === id);
-                if (!p) return;
-
-                // 如果已经拖拽中，忽略
-                if (p.dragging) return;
+                if (!p || p.dragging) return;
 
                 p.dragging = true;
                 target.style.cursor = 'grabbing';
 
-                // 记录触摸点ID（用于多点触摸）
-                if (e.touches) {
-                    p.touchId = e.touches[0].identifier;
-                }
+                const pointer = getPointerEvent(e);
+                if (e.touches) p.touchId = e.touches[0].identifier;
 
                 const rect = target.getBoundingClientRect();
                 p.dragOffsetX = pointer.clientX - rect.left;
                 p.dragOffsetY = pointer.clientY - rect.top;
-
                 p.lastMouseX = pointer.clientX;
                 p.lastMouseY = pointer.clientY;
                 p.lastMouseTime = performance.now();
-
                 p.vx = 0;
                 p.vy = 0;
             }
-
             function handlePointerMove(e) {
-                // 阻止默认滚动
                 e.preventDefault();
-
                 const pointer = getPointerEvent(e);
                 physics.forEach(p => {
                     if (!p.dragging) return;
 
-                    // 对于触摸，检查是否是同一个触摸点
                     if (e.touches && p.touchId !== undefined) {
-                        // 找到对应的touch
                         let matchedTouch = null;
                         for (let i = 0; i < e.touches.length; i++) {
                             if (e.touches[i].identifier === p.touchId) {
@@ -919,20 +786,16 @@
                                 break;
                             }
                         }
-                        if (!matchedTouch) return; // 不是这个触摸点
-                        // 使用matchedTouch更新位置
+                        if (!matchedTouch) return;
                         const ball = document.getElementById(p.id);
                         if (!ball) return;
-
                         let newLeft = matchedTouch.clientX - p.dragOffsetX;
                         let newTop = matchedTouch.clientY - p.dragOffsetY;
-
                         const ballSize = ball.offsetWidth;
                         const maxLeft = window.innerWidth - ballSize;
                         const maxTop = window.innerHeight - ballSize;
                         newLeft = Math.max(0, Math.min(newLeft, maxLeft));
                         newTop = Math.max(0, Math.min(newTop, maxTop));
-
                         p.x = newLeft;
                         p.y = newTop;
                         ball.style.left = newLeft + 'px';
@@ -948,19 +811,15 @@
                             p.lastMouseTime = now;
                         }
                     } else if (!e.touches) {
-                        // 鼠标移动
                         const ball = document.getElementById(p.id);
                         if (!ball) return;
-
                         let newLeft = pointer.clientX - p.dragOffsetX;
                         let newTop = pointer.clientY - p.dragOffsetY;
-
                         const ballSize = ball.offsetWidth;
                         const maxLeft = window.innerWidth - ballSize;
                         const maxTop = window.innerHeight - ballSize;
                         newLeft = Math.max(0, Math.min(newLeft, maxLeft));
                         newTop = Math.max(0, Math.min(newTop, maxTop));
-
                         p.x = newLeft;
                         p.y = newTop;
                         ball.style.left = newLeft + 'px';
@@ -978,14 +837,10 @@
                     }
                 });
             }
-
             function handlePointerEnd(e) {
-                // 触摸结束
                 if (e.touches) {
-                    // 遍历所有physics，释放对应touchId的拖拽
                     physics.forEach(p => {
                         if (p.dragging && p.touchId !== undefined) {
-                            // 检查该touch是否还在touches中（如果有多个触摸点）
                             let stillExists = false;
                             for (let i = 0; i < e.touches.length; i++) {
                                 if (e.touches[i].identifier === p.touchId) {
@@ -1005,7 +860,6 @@
                         }
                     });
                 } else {
-                    // 鼠标释放
                     physics.forEach(p => {
                         if (p.dragging) {
                             p.dragging = false;
@@ -1019,7 +873,6 @@
                 }
             }
 
-            // 添加事件监听
             document.addEventListener('mousedown', handlePointerStart);
             document.addEventListener('touchstart', handlePointerStart, { passive: false });
             document.addEventListener('mousemove', handlePointerMove);
@@ -1027,13 +880,124 @@
             document.addEventListener('mouseup', handlePointerEnd);
             document.addEventListener('touchend', handlePointerEnd);
             document.addEventListener('touchcancel', handlePointerEnd);
-
-            // 阻止拖拽时页面的默认拖拽行为
             document.addEventListener('dragstart', (e) => {
                 if (e.target.classList.contains('ball')) e.preventDefault();
             });
 
-            // 窗口大小改变时，防止小球超出边界
+            // 管理面板逻辑
+            const manageBtn = document.getElementById('manageBallBtn');
+            const managePanel = document.getElementById('managePanel');
+            const deleteModeBtn = document.getElementById('deleteModeBtn');
+            const addLiquidBtn = document.getElementById('addLiquidBtn');
+            const addFrostedBtn = document.getElementById('addFrostedBtn');
+            let deleteMode = false;
+
+            manageBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                managePanel.classList.toggle('show');
+            });
+            document.addEventListener('click', (e) => {
+                if (!managePanel.contains(e.target) && e.target !== manageBtn) {
+                    managePanel.classList.remove('show');
+                }
+            });
+            deleteModeBtn.addEventListener('click', () => {
+                deleteMode = !deleteMode;
+                deleteModeBtn.classList.toggle('active', deleteMode);
+                if (deleteMode) {
+                    document.body.classList.add('delete-mode');
+                } else {
+                    document.body.classList.remove('delete-mode');
+                }
+            });
+
+            function createNewBall(type) {
+                const id = 'ball_' + Date.now() + '_' + Math.random().toString(36).substr(2, 8);
+                const ballDiv = document.createElement('div');
+                ballDiv.className = `ball ball-${type}`;
+                ballDiv.id = id;
+                document.body.appendChild(ballDiv);
+
+                const ballSize = 80;
+                const maxLeft = window.innerWidth - ballSize;
+                const left = Math.random() * maxLeft;
+                const top = -100;
+
+                ballDiv.style.left = left + 'px';
+                ballDiv.style.top = top + 'px';
+
+                balls.push(ballDiv);
+                const radius = ballSize / 2;
+                physics.push({
+                    x: left, y: top,
+                    vx: (Math.random() - 0.5) * 2,
+                    vy: Math.random() * 2,
+                    radius, dragging: false, mass: 1, id,
+                    lastMouseX:0,lastMouseY:0,lastMouseTime:0,
+                    dragOffsetX:0,dragOffsetY:0, touchId:null
+                });
+            }
+            addLiquidBtn.addEventListener('click', () => createNewBall('liquid'));
+            addFrostedBtn.addEventListener('click', () => createNewBall('frosted'));
+
+            function deleteBall(ballElement) {
+                const id = ballElement.id;
+                const pIndex = physics.findIndex(p => p.id === id);
+                if (pIndex === -1) return;
+                const p = physics[pIndex];
+                const isLiquid = ballElement.classList.contains('ball-liquid');
+                const type = isLiquid ? 'liquid' : 'frosted';
+                const x = p.x, y = p.y, vx = p.vx, vy = p.vy, originalRadius = p.radius;
+
+                physics.splice(pIndex, 1);
+                const ballIndex = balls.findIndex(b => b.id === id);
+                if (ballIndex !== -1) balls.splice(ballIndex, 1);
+                ballElement.remove();
+
+                // 破碎效果
+                const fragmentCount = 4 + Math.floor(Math.random() * 3);
+                for (let i = 0; i < fragmentCount; i++) {
+                    const fragRadius = originalRadius * (0.2 + Math.random() * 0.2);
+                    const angle = Math.random() * Math.PI * 2;
+                    const dist = originalRadius * 0.5 * Math.random();
+                    const fragX = x + Math.cos(angle) * dist;
+                    const fragY = y + Math.sin(angle) * dist;
+                    const fragVx = vx + (Math.random() - 0.5) * 4;
+                    const fragVy = vy + (Math.random() - 0.5) * 4 - 2;
+                    const fragId = 'frag_' + Date.now() + '_' + Math.random().toString(36).substr(2, 8);
+                    const fragDiv = document.createElement('div');
+                    fragDiv.className = `ball ball-${type}`;
+                    fragDiv.id = fragId;
+                    fragDiv.style.width = (fragRadius * 2) + 'px';
+                    fragDiv.style.height = (fragRadius * 2) + 'px';
+                    fragDiv.style.left = fragX + 'px';
+                    fragDiv.style.top = fragY + 'px';
+                    document.body.appendChild(fragDiv);
+                    balls.push(fragDiv);
+                    physics.push({
+                        x: fragX, y: fragY, vx: fragVx, vy: fragVy, radius: fragRadius,
+                        dragging: false, mass: 0.3, id: fragId,
+                        lastMouseX:0,lastMouseY:0,lastMouseTime:0,
+                        dragOffsetX:0,dragOffsetY:0, touchId:null
+                    });
+                    setTimeout(() => {
+                        const idx = physics.findIndex(fp => fp.id === fragId);
+                        if (idx !== -1) physics.splice(idx, 1);
+                        const ballIdx = balls.findIndex(b => b.id === fragId);
+                        if (ballIdx !== -1) balls.splice(ballIdx, 1);
+                        document.getElementById(fragId)?.remove();
+                    }, 2000);
+                }
+            }
+
+            // 物理动画循环
+            function animatePhysics() {
+                updatePhysics();
+                requestAnimationFrame(animatePhysics);
+            }
+            animatePhysics();
+
+            // 窗口大小变化调整
             window.addEventListener('resize', () => {
                 updateButtonRects();
                 physics.forEach(p => {
@@ -1050,62 +1014,360 @@
                 });
             });
 
-            // ---------- 模态框逻辑（同前）----------
-            function openModal() {
-                if (isModalOpen) return;
-                if (hideTimeout) {
-                    clearTimeout(hideTimeout);
-                    hideTimeout = null;
+            // ==================== 游戏模块 ====================
+            const gameMenuOverlay = document.getElementById('gameMenuOverlay');
+            const gameMenuBtn = document.getElementById('gameMenuBtn');
+            const curlingGameBtn = document.getElementById('curlingGameBtn');
+            const gameContainer = document.getElementById('gameContainer');
+            const gameCanvas = document.getElementById('gameCanvas');
+            const ctxGame = gameCanvas.getContext('2d');
+            const backToHomeBtn = document.getElementById('backToHomeBtn');
+            const addGameBallBtn = document.getElementById('addGameBallBtn');
+            const gameScoreSpan = document.getElementById('gameScore');
+
+            let gameActive = false;
+            let gameObjects = [];
+            let stone = null;
+            let draggingStone = false;
+            let dragOffset = { x: 0, y: 0 }; // 鼠标相对于石壶中心的偏移
+            let score = 0;
+            let gameAnimationId = null;
+            let MID_LINE = window.innerWidth / 2;
+            const LEFT_GOAL = { x1: 0, x2: 80 };
+            const RIGHT_GOAL = { x1: window.innerWidth-80, x2: window.innerWidth };
+
+            function updateGoalPositions() {
+                RIGHT_GOAL.x1 = window.innerWidth - 80;
+                RIGHT_GOAL.x2 = window.innerWidth;
+                LEFT_GOAL.x2 = 80;
+            }
+
+            function initGame() {
+                gameObjects = [];
+                stone = {
+                    x: 200,
+                    y: window.innerHeight/2,
+                    vx: 0,
+                    vy: 0,
+                    radius: 40,
+                    color: '#333',
+                    type: 'stone'
+                };
+                gameObjects.push({
+                    x: window.innerWidth * 0.7,
+                    y: window.innerHeight/2,
+                    vx: 0,
+                    vy: 0,
+                    radius: 30,
+                    color: 'rgba(100,200,255,0.8)',
+                    type: 'target'
+                });
+                score = 0;
+                updateScore();
+            }
+
+            function updateScore() {
+                gameScoreSpan.textContent = `得分: ${score}`;
+            }
+
+            function updateGame() {
+                if (!gameActive) return;
+
+                // 摩擦力减小：速度衰减从0.98改为0.995
+                const friction = 0.995; // 更小的摩擦力，滑行更远
+
+                // 更新石壶（仅在未被拖动时应用物理）
+                if (!draggingStone) {
+                    stone.vx *= friction;
+                    stone.vy *= friction;
+                    stone.x += stone.vx;
+                    stone.y += stone.vy;
+
+                    // 边界碰撞（石壶不能越过中线）
+                    if (stone.x < stone.radius) {
+                        stone.x = stone.radius;
+                        stone.vx = -stone.vx * 0.5;
+                    }
+                    if (stone.x > MID_LINE - stone.radius) {
+                        stone.x = MID_LINE - stone.radius;
+                        stone.vx = -stone.vx * 0.5;
+                    }
+                    if (stone.y < stone.radius) {
+                        stone.y = stone.radius;
+                        stone.vy = -stone.vy * 0.5;
+                    }
+                    if (stone.y > window.innerHeight - stone.radius) {
+                        stone.y = window.innerHeight - stone.radius;
+                        stone.vy = -stone.vy * 0.5;
+                    }
                 }
 
-                // 弹窗打开时，如果小球没被拖拽，就把它们移到两侧
-                physics.forEach(p => {
-                    if (!p.dragging) {
-                        const ball = document.getElementById(p.id);
-                        if (!ball) return;
-                        const ballSize = ball.offsetWidth;
-                        // 简单判断：如果是液态球（ball-liquid）靠左，否则靠右
-                        if (ball.classList.contains('ball-liquid')) {
-                            p.x = 10;
-                        } else {
-                            p.x = window.innerWidth - ballSize - 10;
-                        }
-                        p.y = Math.max(p.radius, Math.min(p.y, window.innerHeight - p.radius));
-                        p.vx = 0;
-                        p.vy = 0;
-                        ball.style.left = p.x + 'px';
-                        ball.style.top = p.y + 'px';
+                // 更新目标球（同样使用减小后的摩擦力）
+                for (let i = 0; i < gameObjects.length; i++) {
+                    const obj = gameObjects[i];
+                    obj.vx *= friction;
+                    obj.vy *= friction;
+                    obj.x += obj.vx;
+                    obj.y += obj.vy;
+
+                    if (obj.x < obj.radius) {
+                        obj.x = obj.radius;
+                        obj.vx = -obj.vx * 0.5;
                     }
+                    if (obj.x > window.innerWidth - obj.radius) {
+                        obj.x = window.innerWidth - obj.radius;
+                        obj.vx = -obj.vx * 0.5;
+                    }
+                    if (obj.y < obj.radius) {
+                        obj.y = obj.radius;
+                        obj.vy = -obj.vy * 0.5;
+                    }
+                    if (obj.y > window.innerHeight - obj.radius) {
+                        obj.y = window.innerHeight - obj.radius;
+                        obj.vy = -obj.vy * 0.5;
+                    }
+
+                    // 得分检测（进入右侧球门）
+                    if (obj.x + obj.radius > RIGHT_GOAL.x1 && obj.x - obj.radius < RIGHT_GOAL.x2) {
+                        gameObjects.splice(i, 1);
+                        i--;
+                        score++;
+                        updateScore();
+                        continue;
+                    }
+                }
+
+                // 石壶与目标球碰撞
+                for (let i = 0; i < gameObjects.length; i++) {
+                    const obj = gameObjects[i];
+                    const dx = obj.x - stone.x;
+                    const dy = obj.y - stone.y;
+                    const dist = Math.sqrt(dx*dx + dy*dy);
+                    const minDist = stone.radius + obj.radius;
+                    if (dist < minDist) {
+                        const angle = Math.atan2(dy, dx);
+                        const sin = Math.sin(angle);
+                        const cos = Math.cos(angle);
+                        const v1 = stone.vx * cos + stone.vy * sin;
+                        const v2 = obj.vx * cos + obj.vy * sin;
+                        const v1After = v2;
+                        const v2After = v1;
+                        stone.vx = v1After * cos;
+                        stone.vy = v1After * sin;
+                        obj.vx = v2After * cos;
+                        obj.vy = v2After * sin;
+
+                        const overlap = minDist - dist;
+                        const moveX = dx / dist * overlap * 0.5;
+                        const moveY = dy / dist * overlap * 0.5;
+                        stone.x -= moveX;
+                        stone.y -= moveY;
+                        obj.x += moveX;
+                        obj.y += moveY;
+                    }
+                }
+            }
+
+            function drawGame() {
+                ctxGame.clearRect(0, 0, window.innerWidth, window.innerHeight);
+                ctxGame.fillStyle = 'rgba(0,0,0,0.3)';
+                ctxGame.fillRect(0, 0, window.innerWidth, window.innerHeight);
+
+                ctxGame.strokeStyle = 'rgba(255,255,255,0.3)';
+                ctxGame.lineWidth = 2;
+                ctxGame.beginPath();
+                ctxGame.moveTo(MID_LINE, 0);
+                ctxGame.lineTo(MID_LINE, window.innerHeight);
+                ctxGame.stroke();
+
+                ctxGame.fillStyle = 'rgba(255,255,255,0.1)';
+                ctxGame.fillRect(0, 0, 80, window.innerHeight);
+                ctxGame.fillRect(window.innerWidth-80, 0, 80, window.innerHeight);
+
+                ctxGame.shadowColor = 'rgba(0,0,0,0.5)';
+                ctxGame.shadowBlur = 10;
+                ctxGame.beginPath();
+                ctxGame.arc(stone.x, stone.y, stone.radius, 0, Math.PI*2);
+                ctxGame.fillStyle = stone.color;
+                ctxGame.fill();
+                ctxGame.strokeStyle = 'white';
+                ctxGame.lineWidth = 2;
+                ctxGame.stroke();
+
+                gameObjects.forEach(obj => {
+                    ctxGame.beginPath();
+                    ctxGame.arc(obj.x, obj.y, obj.radius, 0, Math.PI*2);
+                    ctxGame.fillStyle = obj.color;
+                    ctxGame.fill();
+                    ctxGame.strokeStyle = 'white';
+                    ctxGame.lineWidth = 2;
+                    ctxGame.stroke();
                 });
 
-                modalOverlay.classList.remove('hide');
-                modalOverlay.style.display = 'flex';
-                void modalOverlay.offsetWidth;
-                modalOverlay.classList.add('show');
-                isModalOpen = true;
+                // 不再绘制拖拽指示线，因为现在是直接跟随鼠标
+                ctxGame.shadowBlur = 0;
             }
 
-            function closeModal() {
-                if (!isModalOpen) return;
-                modalOverlay.classList.remove('show');
-                modalOverlay.classList.add('hide');
-                hideTimeout = setTimeout(() => {
-                    modalOverlay.style.display = 'none';
-                    modalOverlay.classList.remove('hide');
-                    isModalOpen = false;
-                    hideTimeout = null;
-                }, 400);
+            function gameLoop() {
+                if (!gameActive) return;
+                updateGame();
+                drawGame();
+                gameAnimationId = requestAnimationFrame(gameLoop);
             }
 
-            friendBtn.addEventListener('click', openModal);
-            modalOverlay.addEventListener('click', (e) => {
-                if (e.target === modalOverlay) closeModal();
+            // 游戏拖拽：直接跟随鼠标，释放后停止
+            function handleGamePointerStart(e) {
+                if (!gameActive) return;
+                e.preventDefault();
+                const rect = gameCanvas.getBoundingClientRect();
+                const scaleX = gameCanvas.width / rect.width;
+                const scaleY = gameCanvas.height / rect.height;
+                let clientX, clientY;
+                if (e.touches) {
+                    clientX = e.touches[0].clientX;
+                    clientY = e.touches[0].clientY;
+                } else {
+                    clientX = e.clientX;
+                    clientY = e.clientY;
+                }
+                const canvasX = (clientX - rect.left) * scaleX;
+                const canvasY = (clientY - rect.top) * scaleY;
+
+                // 检查是否点击到石壶
+                const dx = canvasX - stone.x;
+                const dy = canvasY - stone.y;
+                if (Math.sqrt(dx*dx + dy*dy) < stone.radius) {
+                    draggingStone = true;
+                    // 计算鼠标相对于石壶中心的偏移
+                    dragOffset.x = canvasX - stone.x;
+                    dragOffset.y = canvasY - stone.y;
+                    stone.vx = 0; // 拖拽时速度清零
+                    stone.vy = 0;
+                }
+            }
+
+            function handleGamePointerMove(e) {
+                if (!gameActive || !draggingStone) return;
+                e.preventDefault();
+                const rect = gameCanvas.getBoundingClientRect();
+                const scaleX = gameCanvas.width / rect.width;
+                const scaleY = gameCanvas.height / rect.height;
+                let clientX, clientY;
+                if (e.touches) {
+                    clientX = e.touches[0].clientX;
+                    clientY = e.touches[0].clientY;
+                } else {
+                    clientX = e.clientX;
+                    clientY = e.clientY;
+                }
+                const canvasX = (clientX - rect.left) * scaleX;
+                const canvasY = (clientY - rect.top) * scaleY;
+
+                // 直接设置石壶位置，保持偏移
+                let newX = canvasX - dragOffset.x;
+                let newY = canvasY - dragOffset.y;
+
+                // 边界限制（石壶不能越过中线）
+                newX = Math.max(stone.radius, Math.min(newX, MID_LINE - stone.radius));
+                newY = Math.max(stone.radius, Math.min(newY, window.innerHeight - stone.radius));
+
+                stone.x = newX;
+                stone.y = newY;
+            }
+
+            function handleGamePointerEnd(e) {
+                if (!gameActive || !draggingStone) return;
+                e.preventDefault();
+                draggingStone = false;
+                // 释放后速度保持为0，石壶立即停止
+            }
+
+            function enterGame() {
+                // 隐藏主页元素
+                document.querySelectorAll('.button-container, .manage-panel, .title-container, .visit-counter, .ball').forEach(el => {
+                    if (el) el.style.display = 'none';
+                });
+                gameContainer.style.display = 'block';
+                gameActive = true;
+                gameCanvas.width = window.innerWidth;
+                gameCanvas.height = window.innerHeight;
+                MID_LINE = window.innerWidth / 2;
+                updateGoalPositions();
+                initGame();
+                gameLoop();
+            }
+
+            function exitGame() {
+                gameActive = false;
+                if (gameAnimationId) {
+                    cancelAnimationFrame(gameAnimationId);
+                    gameAnimationId = null;
+                }
+                gameContainer.style.display = 'none';
+                // 恢复主页元素
+                document.querySelectorAll('.button-container, .manage-panel, .title-container, .visit-counter, .ball').forEach(el => {
+                    if (el) el.style.display = '';
+                });
+            }
+
+            // 游戏事件监听
+            gameCanvas.addEventListener('mousedown', handleGamePointerStart);
+            gameCanvas.addEventListener('mousemove', handleGamePointerMove);
+            gameCanvas.addEventListener('mouseup', handleGamePointerEnd);
+            gameCanvas.addEventListener('touchstart', handleGamePointerStart, { passive: false });
+            gameCanvas.addEventListener('touchmove', handleGamePointerMove, { passive: false });
+            gameCanvas.addEventListener('touchend', handleGamePointerEnd);
+            gameCanvas.addEventListener('touchcancel', handleGamePointerEnd);
+
+            addGameBallBtn.addEventListener('click', () => {
+                if (!gameActive) return;
+                gameObjects.push({
+                    x: 100 + Math.random() * (MID_LINE - 200),
+                    y: 100 + Math.random() * (window.innerHeight - 200),
+                    vx: 0,
+                    vy: 0,
+                    radius: 30,
+                    color: 'rgba(100,200,255,0.8)',
+                    type: 'target'
+                });
             });
-            document.addEventListener('keydown', (e) => {
-                if (e.key === 'Escape' && isModalOpen) closeModal();
+
+            backToHomeBtn.addEventListener('click', exitGame);
+
+            gameMenuBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                gameMenuOverlay.style.display = 'flex';
+                gameMenuOverlay.classList.add('show');
+            });
+            gameMenuOverlay.addEventListener('click', (e) => {
+                if (e.target === gameMenuOverlay) {
+                    gameMenuOverlay.classList.remove('show');
+                    setTimeout(() => {
+                        gameMenuOverlay.style.display = 'none';
+                    }, 400);
+                }
+            });
+            curlingGameBtn.addEventListener('click', () => {
+                gameMenuOverlay.classList.remove('show');
+                setTimeout(() => {
+                    gameMenuOverlay.style.display = 'none';
+                }, 400);
+                enterGame();
+            });
+
+            window.addEventListener('resize', () => {
+                if (gameActive) {
+                    gameCanvas.width = window.innerWidth;
+                    gameCanvas.height = window.innerHeight;
+                    MID_LINE = window.innerWidth / 2;
+                    updateGoalPositions();
+                    stone.x = Math.min(stone.x, MID_LINE - stone.radius);
+                    stone.x = Math.max(stone.x, stone.radius);
+                    stone.y = Math.min(stone.y, window.innerHeight - stone.radius);
+                    stone.y = Math.max(stone.y, stone.radius);
+                }
             });
         })();
     </script>
 </body>
 </html>
-
