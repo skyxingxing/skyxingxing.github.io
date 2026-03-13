@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>星星的网页</title>//🌍🌍🌍
+    <title>星星的网页</title>
     <!-- 不蒜子计数器 -->
     <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
     <style>
@@ -502,7 +502,7 @@
     <!-- PCL2 下载选项菜单 -->
     <div class="modal-overlay" id="mcPcl2SubOverlay" data-level="mc">
         <div class="modal-content game-menu-content">
-            <div class="modal-title">📥 PCL2 下载</div>
+            <div class="modal-title">PCL2 下载</div>
             <div class="game-menu-btn" id="mcLanzouBtn">蓝奏云下载 (提取码pcl2)</div>
             <div class="game-menu-btn" id="mcAfdianBtn">爱发电主页 (龙腾猫跃)</div>
             <div class="game-menu-btn" id="mcQuarkBtn">夸克云盘下载</div>
@@ -513,7 +513,7 @@
     <!-- 手机版子菜单 (HMCL-PE 和 网易版) -->
     <div class="modal-overlay" id="mcMobileSubOverlay" data-level="mc">
         <div class="modal-content game-menu-content">
-            <div class="modal-title">手机版启动器</div>
+            <div class="modal-title">手机启动器</div>
             <div class="game-menu-btn" id="mcHmclPeBtn">HMCL-PE (提取码4eie)</div>
             <div class="game-menu-btn" id="mcNetEaseBtn">网易版</div>
             <div class="close-hint">点击空白处返回上级</div>
@@ -523,7 +523,7 @@
     <!-- 通用空菜单模态框 (备用) -->
     <div class="modal-overlay" id="emptyMenuOverlay" data-level="mc">
         <div class="modal-content game-menu-content">
-            <div class="modal-title">空菜单</div>
+            <div class="modal-title">🌀 空菜单</div>
             <div style="font-size: 20px; margin: 30px 0; opacity: 0.7;">✨ 这里暂时什么都没有 ✨</div>
             <div class="close-hint">点击空白处关闭</div>
         </div>
@@ -533,7 +533,7 @@
     <!-- 光遇主菜单（国服/国际服） -->
     <div class="modal-overlay" id="skyMainOverlay" data-level="sky">
         <div class="modal-content game-menu-content">
-            <div class="modal-title">光遇</div>
+            <div class="modal-title">光遇版本</div>
             <div class="game-menu-btn" id="skyCnBtn">国服</div>
             <div class="game-menu-btn" id="skyIntlBtn">国际服</div>
             <div class="close-hint">点击空白处返回上级</div>
@@ -622,47 +622,184 @@
             let isModalOpen = false;
             let hideTimeout = null;
 
-            function openModal() {
-                if (isModalOpen) return;
-                if (hideTimeout) clearTimeout(hideTimeout);
-                modalOverlay.classList.remove('hide');
-                modalOverlay.style.display = 'flex';
-                void modalOverlay.offsetWidth;
-                modalOverlay.classList.add('show');
-                isModalOpen = true;
-            }
-            function closeModal() {
-                if (!isModalOpen) return;
-                modalOverlay.classList.remove('show');
-                modalOverlay.classList.add('hide');
-                hideTimeout = setTimeout(() => {
-                    modalOverlay.style.display = 'none';
-                    modalOverlay.classList.remove('hide');
-                    isModalOpen = false;
-                    hideTimeout = null;
-                }, 400);
-            }
-            friendBtn.addEventListener('click', openModal);
-            modalOverlay.addEventListener('click', (e) => {
-                if (e.target === modalOverlay) closeModal();
-            });
-            document.addEventListener('keydown', (e) => {
-                if (e.key === 'Escape' && isModalOpen) closeModal();
-            });
-
-            // ==================== 主页小球物理 (不变) ====================
+            // 获取小球元素（动态数组，会变化）
             const ballLiquid = document.getElementById('ballLiquid');
             const ballFrosted = document.getElementById('ballFrosted');
             let balls = [ballLiquid, ballFrosted];
 
-            const GRAVITY = 0.3;
+            // ---------- 管理小球相关 ----------
+            const manageBtn = document.getElementById('manageBallBtn');
+            const managePanel = document.getElementById('managePanel');
+            const deleteModeBtn = document.getElementById('deleteModeBtn');
+            const addLiquidBtn = document.getElementById('addLiquidBtn');
+            const addFrostedBtn = document.getElementById('addFrostedBtn');
+            let deleteMode = false;
+
+            manageBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                managePanel.classList.toggle('show');
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!managePanel.contains(e.target) && e.target !== manageBtn) {
+                    managePanel.classList.remove('show');
+                }
+            });
+
+            deleteModeBtn.addEventListener('click', () => {
+                deleteMode = !deleteMode;
+                deleteModeBtn.classList.toggle('active', deleteMode);
+                if (deleteMode) {
+                    document.body.classList.add('delete-mode');
+                } else {
+                    document.body.classList.remove('delete-mode');
+                }
+            });
+
+            addLiquidBtn.addEventListener('click', () => {
+                createNewBall('liquid');
+            });
+
+            addFrostedBtn.addEventListener('click', () => {
+                createNewBall('frosted');
+            });
+
+            function createNewBall(type) {
+                const id = 'ball_' + Date.now() + '_' + Math.random().toString(36).substr(2, 8);
+                const ballDiv = document.createElement('div');
+                ballDiv.className = `ball ball-${type}`;
+                ballDiv.id = id;
+                document.body.appendChild(ballDiv);
+
+                const ballSize = 80;
+                const maxLeft = window.innerWidth - ballSize;
+                const left = Math.random() * maxLeft;
+                const top = -100;
+
+                ballDiv.style.left = left + 'px';
+                ballDiv.style.top = top + 'px';
+
+                balls.push(ballDiv);
+
+                const radius = ballSize / 2;
+                const physicsObj = {
+                    x: left,
+                    y: top,
+                    vx: (Math.random() - 0.5) * 2,
+                    vy: Math.random() * 2,
+                    radius: radius,
+                    dragging: false,
+                    mass: 1,
+                    id: id,
+                    lastMouseX: 0, lastMouseY: 0, lastMouseTime: 0,
+                    dragOffsetX: 0, dragOffsetY: 0,
+                    touchId: null
+                };
+                physics.push(physicsObj);
+            }
+
+            // ---------- 删除小球（带破碎效果）----------
+            function deleteBall(ballElement) {
+                const id = ballElement.id;
+                const pIndex = physics.findIndex(p => p.id === id);
+                if (pIndex === -1) return;
+                const p = physics[pIndex];
+
+                const isLiquid = ballElement.classList.contains('ball-liquid');
+                const type = isLiquid ? 'liquid' : 'frosted';
+
+                const x = p.x;
+                const y = p.y;
+                const vx = p.vx;
+                const vy = p.vy;
+                const originalRadius = p.radius;
+
+                physics.splice(pIndex, 1);
+                const ballIndex = balls.findIndex(b => b.id === id);
+                if (ballIndex !== -1) balls.splice(ballIndex, 1);
+                ballElement.remove();
+
+                const fragmentCount = 4 + Math.floor(Math.random() * 3);
+                for (let i = 0; i < fragmentCount; i++) {
+                    const fragRadius = originalRadius * (0.2 + Math.random() * 0.2);
+                    const angle = Math.random() * Math.PI * 2;
+                    const dist = originalRadius * 0.5 * Math.random();
+                    const fragX = x + Math.cos(angle) * dist;
+                    const fragY = y + Math.sin(angle) * dist;
+                    const fragVx = vx + (Math.random() - 0.5) * 4;
+                    const fragVy = vy + (Math.random() - 0.5) * 4 - 2;
+                    const fragId = 'frag_' + Date.now() + '_' + Math.random().toString(36).substr(2, 8);
+                    const fragDiv = document.createElement('div');
+                    fragDiv.className = `ball ball-${type}`;
+                    fragDiv.id = fragId;
+                    fragDiv.style.width = (fragRadius * 2) + 'px';
+                    fragDiv.style.height = (fragRadius * 2) + 'px';
+                    fragDiv.style.left = fragX + 'px';
+                    fragDiv.style.top = fragY + 'px';
+                    document.body.appendChild(fragDiv);
+                    balls.push(fragDiv);
+
+                    const fragPhysics = {
+                        x: fragX,
+                        y: fragY,
+                        vx: fragVx,
+                        vy: fragVy,
+                        radius: fragRadius,
+                        dragging: false,
+                        mass: 0.3,
+                        id: fragId,
+                        lastMouseX: 0, lastMouseY: 0, lastMouseTime: 0,
+                        dragOffsetX: 0, dragOffsetY: 0,
+                        touchId: null
+                    };
+                    physics.push(fragPhysics);
+
+                    setTimeout(() => {
+                        const idx = physics.findIndex(fp => fp.id === fragId);
+                        if (idx !== -1) physics.splice(idx, 1);
+                        const ballIdx = balls.findIndex(b => b.id === fragId);
+                        if (ballIdx !== -1) balls.splice(ballIdx, 1);
+                        const fragElem = document.getElementById(fragId);
+                        if (fragElem) fragElem.remove();
+                    }, 2000);
+                }
+            }
+
+            // ---------- 物理引擎相关 ----------
+            const BASE_GRAVITY = 0.3;
+            const GRAVITY_SENSITIVITY = 0.2;
+            let gravityX = 0;
+            let gravityY = BASE_GRAVITY;
+
             const BOUNCE = 0.7;
             const FRICTION = 0.99;
             const BUTTON_BOUNCE = 0.6;
 
-            let physics = [];
-            let buttonRects = [];
+            const physics = [];
+
+            function initPhysics() {
+                balls.forEach((ball, idx) => {
+                    const rect = ball.getBoundingClientRect();
+                    const radius = rect.width / 2;
+                    physics[idx] = {
+                        x: parseFloat(ball.style.left) || rect.left,
+                        y: parseFloat(ball.style.top) || rect.top,
+                        vx: (Math.random() - 0.5) * 2,
+                        vy: Math.random() * 2,
+                        radius: radius,
+                        dragging: false,
+                        mass: 1,
+                        id: ball.id,
+                        lastMouseX: 0, lastMouseY: 0, lastMouseTime: 0,
+                        dragOffsetX: 0, dragOffsetY: 0,
+                        touchId: null
+                    };
+                });
+            }
+            initPhysics();
+
             const collidableBtns = document.querySelectorAll('.collidable-btn');
+            let buttonRects = [];
 
             function updateButtonRects() {
                 buttonRects = Array.from(collidableBtns).map(btn => {
@@ -683,6 +820,7 @@
             function handleCollisionWithButton(p, rect) {
                 const closestX = Math.max(rect.left, Math.min(p.x, rect.right));
                 const closestY = Math.max(rect.top, Math.min(p.y, rect.bottom));
+
                 const dx = p.x - closestX;
                 const dy = p.y - closestY;
                 const dist = Math.sqrt(dx * dx + dy * dy);
@@ -691,9 +829,11 @@
                 if (dist < minDist && dist > 0.001) {
                     const nx = dx / dist;
                     const ny = dy / dist;
+
                     const overlap = minDist - dist;
                     p.x += nx * overlap;
                     p.y += ny * overlap;
+
                     const vn = p.vx * nx + p.vy * ny;
                     if (vn < 0) {
                         const vt_x = p.vx - vn * nx;
@@ -706,71 +846,13 @@
                 return false;
             }
 
-            function initPhysics() {
-                physics = [];
-                balls.forEach((ball, idx) => {
-                    const rect = ball.getBoundingClientRect();
-                    const radius = rect.width / 2;
-                    physics.push({
-                        x: parseFloat(ball.style.left) || rect.left,
-                        y: parseFloat(ball.style.top) || rect.top,
-                        vx: (Math.random() - 0.5) * 2,
-                        vy: Math.random() * 2,
-                        radius: radius,
-                        dragging: false,
-                        mass: 1,
-                        id: ball.id,
-                        lastMouseX: 0, lastMouseY: 0, lastMouseTime: 0,
-                        dragOffsetX: 0, dragOffsetY: 0,
-                        touchId: null
-                    });
-                });
-            }
-            initPhysics();
-
-            // 重力感应
-            let gravityX = 0, gravityY = GRAVITY;
-            const GRAVITY_SENSITIVITY = 0.2;
-            function handleOrientation(event) {
-                let beta = event.beta;   // 前后
-                let gamma = event.gamma;  // 左右
-                if (beta === null || gamma === null) return;
-                const maxAngle = 60;
-                let x = gamma / maxAngle;
-                let y = beta / maxAngle;
-                x = Math.max(-1, Math.min(1, x));
-                y = Math.max(-1, Math.min(1, y));
-                gravityX = x * GRAVITY * GRAVITY_SENSITIVITY;
-                gravityY = GRAVITY + y * GRAVITY * GRAVITY_SENSITIVITY;
-            }
-            function requestDeviceOrientation() {
-                if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-                    DeviceOrientationEvent.requestPermission()
-                        .then(permissionState => {
-                            if (permissionState === 'granted') {
-                                window.addEventListener('deviceorientation', handleOrientation);
-                            }
-                        })
-                        .catch(console.error);
-                } else {
-                    window.addEventListener('deviceorientation', handleOrientation);
-                }
-            }
-            function enableOrientationOnUserGesture() {
-                requestDeviceOrientation();
-                document.removeEventListener('touchstart', enableOrientationOnUserGesture);
-                document.removeEventListener('click', enableOrientationOnUserGesture);
-            }
-            document.addEventListener('touchstart', enableOrientationOnUserGesture);
-            document.addEventListener('click', enableOrientationOnUserGesture);
-
-            // 物理更新
             function updatePhysics() {
                 const width = window.innerWidth;
                 const height = window.innerHeight;
 
-                physics.forEach(p => {
+                physics.forEach((p, idx) => {
                     if (p.dragging) return;
+
                     p.vx *= FRICTION;
                     p.vy *= FRICTION;
                     p.vx += gravityX;
@@ -778,11 +860,13 @@
 
                     let newX = p.x + p.vx;
                     let newY = p.y + p.vy;
+
                     const r = p.radius;
                     if (newX < r) { newX = r; p.vx = -p.vx * BOUNCE; }
                     if (newX > width - r) { newX = width - r; p.vx = -p.vx * BOUNCE; }
                     if (newY < r) { newY = r; p.vy = -p.vy * BOUNCE; }
                     if (newY > height - r) { newY = height - r; p.vy = -p.vy * BOUNCE; }
+
                     p.x = newX;
                     p.y = newY;
 
@@ -793,7 +877,6 @@
                     }
                 });
 
-                // 小球之间碰撞
                 for (let i = 0; i < physics.length; i++) {
                     for (let j = i + 1; j < physics.length; j++) {
                         const p1 = physics[i];
@@ -802,7 +885,7 @@
 
                         const dx = p2.x - p1.x;
                         const dy = p2.y - p1.y;
-                        const dist = Math.sqrt(dx*dx + dy*dy);
+                        const dist = Math.sqrt(dx * dx + dy * dy);
                         const minDist = p1.radius + p2.radius;
 
                         if (dist < minDist && dist > 0.001) {
@@ -842,7 +925,6 @@
                     }
                 }
 
-                // 小球与按钮碰撞
                 physics.forEach(p => {
                     if (p.dragging) return;
                     buttonRects.forEach(rect => {
@@ -856,11 +938,56 @@
                 });
             }
 
-            // 主页拖拽 (不变)
+            function animate() {
+                updatePhysics();
+                requestAnimationFrame(animate);
+            }
+            animate();
+
+            // ---------- 设备方向重力感应 ----------
+            function handleOrientation(event) {
+                let beta = event.beta;
+                let gamma = event.gamma;
+                if (beta === null || gamma === null) return;
+                const maxAngle = 60;
+                let x = gamma / maxAngle;
+                let y = beta / maxAngle;
+                x = Math.max(-1, Math.min(1, x));
+                y = Math.max(-1, Math.min(1, y));
+                gravityX = x * BASE_GRAVITY * GRAVITY_SENSITIVITY;
+                gravityY = BASE_GRAVITY + y * BASE_GRAVITY * GRAVITY_SENSITIVITY;
+            }
+
+            function requestDeviceOrientation() {
+                if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+                    DeviceOrientationEvent.requestPermission()
+                        .then(permissionState => {
+                            if (permissionState === 'granted') {
+                                window.addEventListener('deviceorientation', handleOrientation);
+                            }
+                        })
+                        .catch(console.error);
+                } else {
+                    window.addEventListener('deviceorientation', handleOrientation);
+                }
+            }
+
+            function enableOrientationOnUserGesture() {
+                requestDeviceOrientation();
+                document.removeEventListener('touchstart', enableOrientationOnUserGesture);
+                document.removeEventListener('click', enableOrientationOnUserGesture);
+            }
+            document.addEventListener('touchstart', enableOrientationOnUserGesture);
+            document.addEventListener('click', enableOrientationOnUserGesture);
+
+            // ---------- 事件监听（支持鼠标和触摸）----------
             function getPointerEvent(e) {
-                if (e.touches) return e.touches[0];
+                if (e.touches) {
+                    return e.touches[0];
+                }
                 return e;
             }
+
             function handlePointerStart(e) {
                 const target = e.target;
                 if (!target.classList.contains('ball')) return;
@@ -871,25 +998,31 @@
                     return;
                 }
 
+                const pointer = getPointerEvent(e);
                 const id = target.id;
                 const p = physics.find(p => p.id === id);
-                if (!p || p.dragging) return;
+                if (!p) return;
+                if (p.dragging) return;
 
                 p.dragging = true;
                 target.style.cursor = 'grabbing';
 
-                const pointer = getPointerEvent(e);
-                if (e.touches) p.touchId = e.touches[0].identifier;
+                if (e.touches) {
+                    p.touchId = e.touches[0].identifier;
+                }
 
                 const rect = target.getBoundingClientRect();
                 p.dragOffsetX = pointer.clientX - rect.left;
                 p.dragOffsetY = pointer.clientY - rect.top;
+
                 p.lastMouseX = pointer.clientX;
                 p.lastMouseY = pointer.clientY;
                 p.lastMouseTime = performance.now();
+
                 p.vx = 0;
                 p.vy = 0;
             }
+
             function handlePointerMove(e) {
                 e.preventDefault();
                 const pointer = getPointerEvent(e);
@@ -907,13 +1040,16 @@
                         if (!matchedTouch) return;
                         const ball = document.getElementById(p.id);
                         if (!ball) return;
+
                         let newLeft = matchedTouch.clientX - p.dragOffsetX;
                         let newTop = matchedTouch.clientY - p.dragOffsetY;
+
                         const ballSize = ball.offsetWidth;
                         const maxLeft = window.innerWidth - ballSize;
                         const maxTop = window.innerHeight - ballSize;
                         newLeft = Math.max(0, Math.min(newLeft, maxLeft));
                         newTop = Math.max(0, Math.min(newTop, maxTop));
+
                         p.x = newLeft;
                         p.y = newTop;
                         ball.style.left = newLeft + 'px';
@@ -931,13 +1067,16 @@
                     } else if (!e.touches) {
                         const ball = document.getElementById(p.id);
                         if (!ball) return;
+
                         let newLeft = pointer.clientX - p.dragOffsetX;
                         let newTop = pointer.clientY - p.dragOffsetY;
+
                         const ballSize = ball.offsetWidth;
                         const maxLeft = window.innerWidth - ballSize;
                         const maxTop = window.innerHeight - ballSize;
                         newLeft = Math.max(0, Math.min(newLeft, maxLeft));
                         newTop = Math.max(0, Math.min(newTop, maxTop));
+
                         p.x = newLeft;
                         p.y = newTop;
                         ball.style.left = newLeft + 'px';
@@ -955,6 +1094,7 @@
                     }
                 });
             }
+
             function handlePointerEnd(e) {
                 if (e.touches) {
                     physics.forEach(p => {
@@ -998,122 +1138,10 @@
             document.addEventListener('mouseup', handlePointerEnd);
             document.addEventListener('touchend', handlePointerEnd);
             document.addEventListener('touchcancel', handlePointerEnd);
+
             document.addEventListener('dragstart', (e) => {
                 if (e.target.classList.contains('ball')) e.preventDefault();
             });
-
-            // 管理面板逻辑
-            const manageBtn = document.getElementById('manageBallBtn');
-            const managePanel = document.getElementById('managePanel');
-            const deleteModeBtn = document.getElementById('deleteModeBtn');
-            const addLiquidBtn = document.getElementById('addLiquidBtn');
-            const addFrostedBtn = document.getElementById('addFrostedBtn');
-            let deleteMode = false;
-
-            manageBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                managePanel.classList.toggle('show');
-            });
-            document.addEventListener('click', (e) => {
-                if (!managePanel.contains(e.target) && e.target !== manageBtn) {
-                    managePanel.classList.remove('show');
-                }
-            });
-            deleteModeBtn.addEventListener('click', () => {
-                deleteMode = !deleteMode;
-                deleteModeBtn.classList.toggle('active', deleteMode);
-                if (deleteMode) {
-                    document.body.classList.add('delete-mode');
-                } else {
-                    document.body.classList.remove('delete-mode');
-                }
-            });
-
-            function createNewBall(type) {
-                const id = 'ball_' + Date.now() + '_' + Math.random().toString(36).substr(2, 8);
-                const ballDiv = document.createElement('div');
-                ballDiv.className = `ball ball-${type}`;
-                ballDiv.id = id;
-                document.body.appendChild(ballDiv);
-
-                const ballSize = 80;
-                const maxLeft = window.innerWidth - ballSize;
-                const left = Math.random() * maxLeft;
-                const top = -100;
-
-                ballDiv.style.left = left + 'px';
-                ballDiv.style.top = top + 'px';
-
-                balls.push(ballDiv);
-                const radius = ballSize / 2;
-                physics.push({
-                    x: left, y: top,
-                    vx: (Math.random() - 0.5) * 2,
-                    vy: Math.random() * 2,
-                    radius, dragging: false, mass: 1, id,
-                    lastMouseX:0,lastMouseY:0,lastMouseTime:0,
-                    dragOffsetX:0,dragOffsetY:0, touchId:null
-                });
-            }
-            addLiquidBtn.addEventListener('click', () => createNewBall('liquid'));
-            addFrostedBtn.addEventListener('click', () => createNewBall('frosted'));
-
-            function deleteBall(ballElement) {
-                const id = ballElement.id;
-                const pIndex = physics.findIndex(p => p.id === id);
-                if (pIndex === -1) return;
-                const p = physics[pIndex];
-                const isLiquid = ballElement.classList.contains('ball-liquid');
-                const type = isLiquid ? 'liquid' : 'frosted';
-                const x = p.x, y = p.y, vx = p.vx, vy = p.vy, originalRadius = p.radius;
-
-                physics.splice(pIndex, 1);
-                const ballIndex = balls.findIndex(b => b.id === id);
-                if (ballIndex !== -1) balls.splice(ballIndex, 1);
-                ballElement.remove();
-
-                // 破碎效果
-                const fragmentCount = 4 + Math.floor(Math.random() * 3);
-                for (let i = 0; i < fragmentCount; i++) {
-                    const fragRadius = originalRadius * (0.2 + Math.random() * 0.2);
-                    const angle = Math.random() * Math.PI * 2;
-                    const dist = originalRadius * 0.5 * Math.random();
-                    const fragX = x + Math.cos(angle) * dist;
-                    const fragY = y + Math.sin(angle) * dist;
-                    const fragVx = vx + (Math.random() - 0.5) * 4;
-                    const fragVy = vy + (Math.random() - 0.5) * 4 - 2;
-                    const fragId = 'frag_' + Date.now() + '_' + Math.random().toString(36).substr(2, 8);
-                    const fragDiv = document.createElement('div');
-                    fragDiv.className = `ball ball-${type}`;
-                    fragDiv.id = fragId;
-                    fragDiv.style.width = (fragRadius * 2) + 'px';
-                    fragDiv.style.height = (fragRadius * 2) + 'px';
-                    fragDiv.style.left = fragX + 'px';
-                    fragDiv.style.top = fragY + 'px';
-                    document.body.appendChild(fragDiv);
-                    balls.push(fragDiv);
-                    physics.push({
-                        x: fragX, y: fragY, vx: fragVx, vy: fragVy, radius: fragRadius,
-                        dragging: false, mass: 0.3, id: fragId,
-                        lastMouseX:0,lastMouseY:0,lastMouseTime:0,
-                        dragOffsetX:0,dragOffsetY:0, touchId:null
-                    });
-                    setTimeout(() => {
-                        const idx = physics.findIndex(fp => fp.id === fragId);
-                        if (idx !== -1) physics.splice(idx, 1);
-                        const ballIdx = balls.findIndex(b => b.id === fragId);
-                        if (ballIdx !== -1) balls.splice(ballIdx, 1);
-                        document.getElementById(fragId)?.remove();
-                    }, 2000);
-                }
-            }
-
-            // 主页物理循环
-            function animatePhysics() {
-                updatePhysics();
-                requestAnimationFrame(animatePhysics);
-            }
-            animatePhysics();
 
             window.addEventListener('resize', () => {
                 updateButtonRects();
@@ -1131,6 +1159,81 @@
                 });
             });
 
+            // ---------- 模态框逻辑（好友码）----------
+            function openModal() {
+                if (isModalOpen) return;
+                if (hideTimeout) {
+                    clearTimeout(hideTimeout);
+                    hideTimeout = null;
+                }
+
+                // 将小球移到两侧并停止运动
+                physics.forEach(p => {
+                    if (!p.dragging) {
+                        const ball = document.getElementById(p.id);
+                        if (!ball) return;
+                        const ballSize = ball.offsetWidth;
+                        if (ball.classList.contains('ball-liquid')) {
+                            p.x = 10;
+                        } else {
+                            p.x = window.innerWidth - ballSize - 10;
+                        }
+                        p.y = Math.max(p.radius, Math.min(p.y, window.innerHeight - p.radius));
+                        p.vx = 0;
+                        p.vy = 0;
+                        ball.style.left = p.x + 'px';
+                        ball.style.top = p.y + 'px';
+                    }
+                });
+
+                modalOverlay.classList.remove('hide');
+                modalOverlay.style.display = 'flex';
+                void modalOverlay.offsetWidth;
+                modalOverlay.classList.add('show');
+                isModalOpen = true;
+            }
+
+            function closeModal() {
+                if (!isModalOpen) return;
+                modalOverlay.classList.remove('show');
+                modalOverlay.classList.add('hide');
+                hideTimeout = setTimeout(() => {
+                    modalOverlay.style.display = 'none';
+                    modalOverlay.classList.remove('hide');
+                    isModalOpen = false;
+                    hideTimeout = null;
+                }, 400);
+            }
+
+            friendBtn.addEventListener('click', openModal);
+            modalOverlay.addEventListener('click', (e) => {
+                if (e.target === modalOverlay) closeModal();
+            });
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && isModalOpen) closeModal();
+            });
+
+            // ---------- 通用小球移动函数（用于所有模态框打开时）----------
+            function moveBallsAsideForModal() {
+                physics.forEach(p => {
+                    if (!p.dragging) {
+                        const ball = document.getElementById(p.id);
+                        if (!ball) return;
+                        const ballSize = ball.offsetWidth;
+                        if (ball.classList.contains('ball-liquid')) {
+                            p.x = 10;
+                        } else {
+                            p.x = window.innerWidth - ballSize - 10;
+                        }
+                        p.y = Math.max(p.radius, Math.min(p.y, window.innerHeight - p.radius));
+                        p.vx = 0;
+                        p.vy = 0;
+                        ball.style.left = p.x + 'px';
+                        ball.style.top = p.y + 'px';
+                    }
+                });
+            }
+
             // ==================== 游戏模块（冰壶 + 丢珠子 + 自动冰壶 + MC菜单 + 光遇菜单） ====================
             const gameMenuOverlay = document.getElementById('gameMenuOverlay');
             const gameMenuBtn = document.getElementById('gameMenuBtn');
@@ -1138,7 +1241,7 @@
             const curlingAutoGameBtn = document.getElementById('curlingAutoGameBtn');
             const dropperGameBtn = document.getElementById('dropperGameBtn');
             const mcGameBtn = document.getElementById('mcGameBtn');
-            const skyGameBtn = document.getElementById('skyGameBtn');   // 新增光遇按钮
+            const skyGameBtn = document.getElementById('skyGameBtn');
             const gameContainer = document.getElementById('gameContainer');
             const gameCanvas = document.getElementById('gameCanvas');
             const ctxGame = gameCanvas.getContext('2d');
@@ -1167,7 +1270,7 @@
             const mcHmclPeBtn = document.getElementById('mcHmclPeBtn');
             const mcNetEaseBtn = document.getElementById('mcNetEaseBtn');
 
-            // ========== 新增 光遇 相关元素 ==========
+            // 光遇相关元素
             const skyMainOverlay = document.getElementById('skyMainOverlay');
             const skyInternationalOverlay = document.getElementById('skyInternationalOverlay');
             const skyCnBtn = document.getElementById('skyCnBtn');
@@ -1184,6 +1287,9 @@
                     gameMenuOverlay.classList.remove('show');
                     setTimeout(() => { gameMenuOverlay.style.display = 'none'; }, 400);
                 }
+                // 打开前移动小球
+                moveBallsAsideForModal();
+
                 modal.classList.remove('hide');
                 modal.style.display = 'flex';
                 void modal.offsetWidth;
@@ -1266,6 +1372,9 @@
                     gameMenuOverlay.classList.remove('show');
                     setTimeout(() => { gameMenuOverlay.style.display = 'none'; }, 400);
                 }
+                // 打开前移动小球
+                moveBallsAsideForModal();
+
                 modal.classList.remove('hide');
                 modal.style.display = 'flex';
                 void modal.offsetWidth;
@@ -1699,7 +1808,7 @@
                 ctxGame.shadowBlur = 0;
             }
 
-            // ---------- 丢珠子游戏变量 ----------
+            // ---------- 丢珠子游戏变量 (修改：槽位改为11个，发射器可左右移动，范围±40%，速度0.005) ----------
             let pegs = [];
             let dropperBalls = [];
             let remainingBalls = 10;
@@ -1709,14 +1818,20 @@
             const tubeBaseY = 80;
             const tubeLength = 50;
             const maxAngle = 60 * Math.PI / 180;
+            // 新增：发射器水平移动相关变量
+            let tubeXOffset = 0;
+            let tubeXSpeed = 0.005;        // 移动速度 (较慢)
+            const maxXOffset = 0.4;         // 最大偏移比例 40% 窗口宽度
+
             const ballRadius = 12;
             const pegRadius = 6;
             const gravity = 0.2;
             const friction = 0.99;
             let bottomY = window.innerHeight - 100;
-            const slotCount = 7;
+            const slotCount = 11; // 从7改为11
             let slotWidth = window.innerWidth / slotCount;
-            const slotScores = [3, 2, 1, 0, 1, 2, 3];
+            // 积分序列改为 [3,0,2,0,1,0,1,0,2,0,3]
+            const slotScores = [3, 0, 2, 0, 1, 0, 1, 0, 2, 0, 3];
 
             function updateSlotWidth() { slotWidth = window.innerWidth / slotCount; }
             function updateBottomY() { bottomY = window.innerHeight - 100; }
@@ -1756,6 +1871,7 @@
                 dropperScore = 0;
                 tubeAngle = 0;
                 tubeAngleSpeed = 0.02;
+                tubeXOffset = 0; // 重置水平偏移
                 updateSlotWidth();
                 updateBottomY();
                 generatePegs();
@@ -1769,7 +1885,8 @@
 
             function fireBall() {
                 if (remainingBalls <= 0) return;
-                const baseX = window.innerWidth / 2;
+                // 计算当前发射器基座位置：窗口宽度一半 + 水平偏移
+                const baseX = window.innerWidth / 2 + tubeXOffset * window.innerWidth;
                 const tipX = baseX + Math.sin(tubeAngle) * tubeLength;
                 const tipY = tubeBaseY + Math.cos(tubeAngle) * tubeLength;
                 dropperBalls.push({ x: tipX, y: tipY, vx: 0, vy: 0, radius: ballRadius });
@@ -1783,6 +1900,7 @@
                 dropperScore = 0;
                 tubeAngle = 0;
                 tubeAngleSpeed = 0.02;
+                tubeXOffset = 0;
                 updateDropperUI();
             }
 
@@ -1791,6 +1909,12 @@
                 if (tubeAngle > maxAngle || tubeAngle < -maxAngle) {
                     tubeAngleSpeed = -tubeAngleSpeed;
                     tubeAngle = Math.max(-maxAngle, Math.min(maxAngle, tubeAngle));
+                }
+                // 更新水平偏移，类似摆动，范围 ±maxXOffset
+                tubeXOffset += tubeXSpeed;
+                if (tubeXOffset > maxXOffset || tubeXOffset < -maxXOffset) {
+                    tubeXSpeed = -tubeXSpeed;
+                    tubeXOffset = Math.max(-maxXOffset, Math.min(maxXOffset, tubeXOffset));
                 }
             }
 
@@ -1889,7 +2013,8 @@
                     ctxGame.fillText(slotScores[i] + '分', x + slotWidth/2, bottomY + 30);
                 }
                 ctxGame.textAlign = "left";
-                const baseX = window.innerWidth / 2;
+                // 绘制移动的发射器
+                const baseX = window.innerWidth / 2 + tubeXOffset * window.innerWidth;
                 const tipX = baseX + Math.sin(tubeAngle) * tubeLength;
                 const tipY = tubeBaseY + Math.cos(tubeAngle) * tubeLength;
                 ctxGame.shadowBlur = 10;
@@ -2027,36 +2152,86 @@
                 addCurlingBall();
             });
 
-            dropperFireBtn.addEventListener('click', () => {
-                if (gameActive && gameMode === 'dropper') fireBall();
+            // ---------- 长按连续发射逻辑 ----------
+            let fireInterval = null;
+            function startContinuousFire() {
+                if (fireInterval) return;
+                // 立即发射一次
+                fireBall();
+                // 然后每100ms发射一次
+                fireInterval = setInterval(() => {
+                    fireBall();
+                }, 100);
+            }
+            function stopContinuousFire() {
+                if (fireInterval) {
+                    clearInterval(fireInterval);
+                    fireInterval = null;
+                }
+            }
+
+            // 绑定鼠标/触摸事件
+            dropperFireBtn.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                startContinuousFire();
             });
+            dropperFireBtn.addEventListener('mouseup', stopContinuousFire);
+            dropperFireBtn.addEventListener('mouseleave', stopContinuousFire); // 防止鼠标移出按钮后还继续
+
+            dropperFireBtn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                startContinuousFire();
+            });
+            dropperFireBtn.addEventListener('touchend', stopContinuousFire);
+            dropperFireBtn.addEventListener('touchcancel', stopContinuousFire);
+            // 原有点击事件也需要保留，但为了不重复，我们让startContinuousFire先执行一次，但注意不要重复
+            // 我们移除原来的click绑定，因为mousedown已经处理了首次发射，且会持续
+            // 但为了兼容性，我们仍保留click但只调用一次？实际上mousedown已经触发，click也会触发，可能导致两次。
+            // 所以我们将原dropperFireBtn的click监听移除，改为通过mousedown/touchstart处理。
+            // 注意：原代码中有 dropperFireBtn.addEventListener('click', ...) 需要注释掉。
+            // 我们将在后面覆盖，但为了避免冲突，我们在下面重新绑定，并移除原有监听。
+            // 但原代码中可能已经绑定了，我们可以在后面重新绑定，但最好先移除。
+            // 由于代码执行顺序，我们可以在定义后先移除原有监听。但原代码中可能没有直接绑定，而是通过后面的事件绑定？检查原文件发现确实有 dropperFireBtn.addEventListener('click', ...) 在下面。
+            // 我们将在下面覆盖，但为了安全，我们在这里先移除所有监听。
+            // 实际上下面的代码中会有 dropperFireBtn.addEventListener('click', ...) 我们将在之后替换。
+            // 所以我们先定义，后面再重新绑定。
+            // 但为了代码整洁，我们直接在原来的位置替换掉。
+
+            // 重置按钮不变
             dropperResetBtn.addEventListener('click', () => {
                 if (gameActive && gameMode === 'dropper') resetDropper();
             });
 
             backToHomeBtn.addEventListener('click', exitGame);
 
+            // 游戏菜单按钮
             gameMenuBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
+                // 打开前移动小球
+                moveBallsAsideForModal();
                 gameMenuOverlay.style.display = 'flex';
                 gameMenuOverlay.classList.add('show');
             });
+
             gameMenuOverlay.addEventListener('click', (e) => {
                 if (e.target === gameMenuOverlay) {
                     gameMenuOverlay.classList.remove('show');
                     setTimeout(() => { gameMenuOverlay.style.display = 'none'; }, 400);
                 }
             });
+
             curlingGameBtn.addEventListener('click', () => {
                 gameMenuOverlay.classList.remove('show');
                 setTimeout(() => { gameMenuOverlay.style.display = 'none'; }, 400);
                 enterGame('curling');
             });
+
             curlingAutoGameBtn.addEventListener('click', () => {
                 gameMenuOverlay.classList.remove('show');
                 setTimeout(() => { gameMenuOverlay.style.display = 'none'; }, 400);
                 enterGame('curlingAuto');
             });
+
             dropperGameBtn.addEventListener('click', () => {
                 gameMenuOverlay.classList.remove('show');
                 setTimeout(() => { gameMenuOverlay.style.display = 'none'; }, 400);
@@ -2085,6 +2260,12 @@
                     generatePegs();
                 }
             });
+
+            // 注意：原代码中可能还有对 dropperFireBtn 的 click 绑定，我们将其覆盖，确保长按逻辑生效。
+            // 但原代码中在最后部分并没有看到对 dropperFireBtn 的 click 绑定，实际上是在上面定义的，所以没有问题。
+            // 为了确保，我们移除之前可能的监听，重新绑定。
+            // 实际上我们已经在上面重新绑定了，并且去掉了原来的 click 监听。
+            // 原来的代码中在 dropperFireBtn 上可能没有额外的 click 监听，所以安全。
         })();
     </script>
 </body>
