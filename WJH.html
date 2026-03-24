@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>我也不知道写什么</title>
+    <!-- SheetJS 用于解析 Excel -->
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: system-ui, 'Segoe UI', 'Inter', sans-serif;
+        }
+        body {
+            background: linear-gradient(145deg, #f0f7ff 0%, #e9f0fa 100%);
+            min-height: 100vh;
+            padding: 24px;
+            color: #1e293b;
+        }
+        .app {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(2px);
+            border-radius: 32px;
+            box-shadow: 0 20px 35px -12px rgba(0, 0, 0, 0.1);
+            padding: 24px 28px;
+            margin-bottom: 28px;
+            border: 1px solid rgba(59, 130, 246, 0.2);
+        }
+        h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #1e4b8f, #3b82f6);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+            margin-bottom: 8px;
+        }
+        .sub {
+            color: #4b5563;
+            margin-bottom: 20px;
+            border-left: 4px solid #3b82f6;
+            padding-left: 14px;
+            font-weight: 500;
+        }
+        .upload-area {
+            background: #f8fafc;
+            border: 2px dashed #cbd5e1;
+            border-radius: 28px;
+            padding: 48px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .upload-area:hover {
+            border-color: #3b82f6;
+            background: #f0f6ff;
+        }
+        .upload-icon { font-size: 48px; margin-bottom: 12px; }
+        .file-hint { font-size: 0.75rem; color: #6c757d; margin-top: 12px; }
+        .student-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 12px;
+            max-height: 460px;
+            overflow-y: auto;
+            padding: 8px;
+        }
+        .student-card {
+            background: white;
+            border-radius: 60px;
+            padding: 8px 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border: 1px solid #e2e8f0;
+        }
+        .student-card input { width: 18px; height: 18px; accent-color: #3b82f6; }
+        .student-name { font-weight: 500; flex: 1; font-size: 0.9rem; }
+        .leader-badge { background: #3b82f6; color: white; border-radius: 40px; padding: 2px 10px; font-size: 0.65rem; font-weight: 600; }
+        button {
+            background: white;
+            border: 1px solid #cbd5e1;
+            padding: 8px 20px;
+            border-radius: 60px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+            font-size: 0.9rem;
+        }
+        button.primary { background: #3b82f6; border-color: #3b82f6; color: white; box-shadow: 0 4px 8px rgba(59,130,246,0.2); }
+        button.primary:hover { background: #2563eb; transform: translateY(-1px); }
+        button.outline { border-color: #3b82f6; color: #3b82f6; }
+        .animation-stage { position: relative; min-height: 600px; }
+        .student-matrix {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(85px, 100px));
+            gap: 8px;
+            justify-content: center;
+            margin-bottom: 30px;
+            background: rgba(255,255,240,0.4);
+            padding: 16px;
+            border-radius: 28px;
+        }
+        .student-tile {
+            background: linear-gradient(145deg, #ffffff, #f8fafc);
+            border-radius: 20px;
+            padding: 8px 4px;
+            text-align: center;
+            font-weight: 500;
+            font-size: 0.8rem;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+            border: 1px solid #e2e8f0;
+            transition: all 0.2s;
+            cursor: default;
+            will-change: transform;
+        }
+        /* 飞行克隆体 - 超丝滑设计 */
+        .fly-clone {
+            position: fixed;
+            z-index: 9999;
+            background: linear-gradient(135deg, #ffffff, #eef2ff);
+            border-radius: 20px;
+            padding: 8px 4px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 0.8rem;
+            box-shadow: 0 12px 28px -8px rgba(0, 0, 0, 0.3);
+            border: 1px solid #3b82f6;
+            color: #1e40af;
+            backdrop-filter: blur(4px);
+            transition: transform 0.45s cubic-bezier(0.2, 0.95, 0.4, 1.05), opacity 0.35s ease;
+            opacity: 0.95;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            pointer-events: none;
+            width: auto;
+            min-width: 70px;
+            max-width: 120px;
+            box-sizing: content-box;
+            will-change: transform, opacity;
+        }
+        .groups-target {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-top: 20px;
+            justify-content: center;
+        }
+        .target-group {
+            background: white;
+            border-radius: 20px;
+            width: 150px;
+            min-width: 140px;
+            flex-shrink: 0;
+            box-shadow: 0 6px 14px rgba(0,0,0,0.05);
+            overflow: hidden;
+            border: 1px solid #eef2ff;
+        }
+        .target-group-header { background: #eef4ff; padding: 8px 6px; text-align: center; font-weight: 700; font-size: 0.8rem; border-bottom: 1px solid #cddff8; }
+        .target-leader { background: #fff9e8; padding: 8px 6px; text-align: center; font-weight: 600; font-size: 0.8rem; color: #b45309; white-space: nowrap; overflow-x: auto; }
+        .target-members { min-height: 70px; padding: 8px 6px; background: #fefefe; display: flex; flex-direction: column; gap: 4px; max-height: 220px; overflow-y: auto; }
+        .member-fly-item {
+            background: #f1f5f9;
+            padding: 4px 8px;
+            border-radius: 30px;
+            font-size: 0.7rem;
+            animation: gentlePop 0.2s cubic-bezier(0.34, 1.2, 0.64, 1);
+            text-align: center;
+        }
+        @keyframes gentlePop {
+            0% { opacity: 0; transform: scale(0.7) translateY(8px); }
+            100% { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        .empty-members { color: #94a3b8; font-size: 0.7rem; text-align: center; padding: 6px 0; }
+        .final-group-card {
+            background: white;
+            border-radius: 20px;
+            width: 150px;
+            min-width: 140px;
+            flex: 0 0 auto;
+            border: 1px solid #eef2ff;
+            overflow: hidden;
+            animation: fadeUp 0.3s ease;
+        }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .final-group-card > div:first-child { background: #eef4ff; padding: 8px 6px; text-align: center; font-weight: 700; font-size: 0.8rem; }
+        .final-group-card .leader-area { background: #fff9e8; padding: 8px 6px; text-align: center; font-weight: 700; font-size: 0.8rem; color: #b45309; white-space: nowrap; overflow-x: auto; }
+        .final-group-card .members-area { padding: 8px 6px; }
+        .final-group-card .members-title { font-size: 0.65rem; color: #5b6e8c; margin-bottom: 6px; text-align: center; }
+        .final-group-card .member-list { display: flex; flex-direction: column; gap: 4px; }
+        .final-group-card .member-list div { background: #f1f5f9; padding: 4px 6px; border-radius: 30px; font-size: 0.7rem; text-align: center; }
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1e293b;
+            color: white;
+            padding: 10px 24px;
+            border-radius: 60px;
+            font-size: 0.85rem;
+            z-index: 200;
+            opacity: 0;
+            transition: 0.2s;
+            pointer-events: none;
+        }
+        .toast.show { opacity: 1; }
+        .flex-between { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
+        .stats-badge { background: #eef2ff; padding: 4px 14px; border-radius: 40px; font-size: 0.8rem; font-weight: 600; }
+        @media (max-width: 700px) {
+            .student-matrix { grid-template-columns: repeat(auto-fill, minmax(70px, 80px)); }
+            .target-group, .final-group-card { width: 130px; min-width: 120px; }
+            .fly-clone { font-size: 0.7rem; padding: 6px 3px; min-width: 60px; }
+        }
+    </style>
+</head>
+<body>
+<div class="app">
+    <div id="step1" class="card">
+        <h1>我写点什么呢</h1>
+        <div class="sub">自动下载结果</div>
+        <div class="upload-area" id="uploadTrigger">
+            <div class="upload-icon">这是一个文件夹图标</div>
+            <div class="upload-text">点击上传 .txt 或 .xlsx / .xls 文件</div>
+            <input type="file" id="fileInput" accept=".txt,.xlsx,.xls" style="display:none">
+            <div class="file-hint">TXT：每行一个姓名（UTF-8编码）；Excel：读取第一列姓名</div>
+        </div>
+    </div>
+    <div id="step2" class="card" style="display: none;">
+        <div class="flex-between">
+            <h2>勾选组长 <span id="leaderCount" class="stats-badge">已选0人</span></h2>
+            <button id="startAnimationBtn" class="primary">分组</button>
+        </div>
+        <div id="studentChecklist" class="student-grid"></div>
+        <div style="margin-top: 20px; text-align: right;">
+            <button id="backToImportStep2" class="outline">后悔了，重新导入</button>
+        </div>
+    </div>
+    <div id="step3" class="card" style="display: none;">
+        <div class="flex-between">
+            <h2>那就随便写点什么吧</h2>
+            <span id="animationProgress" class="stats-badge">等待开始</span>
+        </div>
+        <div id="animationContainer" class="animation-stage"></div>
+        <div style="text-align: center; margin-top: 20px;">
+            <button id="skipAnimationBtn" class="outline">跳过广告</button>
+        </div>
+    </div>
+    <div id="step4" class="card" style="display: none;">
+        <div class="flex-between">
+            <h2>分组结果</h2>
+            <span id="finalStats" class="stats-badge"></span>
+        </div>
+        <div id="finalGroupsContainer" style="display: flex; flex-wrap: wrap; gap: 16px; margin-top: 16px;"></div>
+        <div style="margin-top: 24px; display: flex; gap: 12px; justify-content: flex-end;">
+            <button id="copyFinalBtn" class="outline">Ctrl+C</button>
+            <button id="newImportBtn" class="outline">new</button>
+        </div>
+        <div class="file-hint" style="text-align:center; margin-top:16px;">分组成功，结果已自动下载MC</div>
+    </div>
+</div>
+<div id="toastMsg" class="toast"></div>
+
+<script>
+    // ------------------- 全局 -------------------
+    let students = [];            
+    let selectedLeaders = new Set(); 
+    let finalGroups = null;       
+    let animationGroups = null;
+    let animationActive = false;
+    let abortFlag = false;
+    let activeClones = [];          // 所有飞行克隆体
+    let pendingFlights = [];         // 待执行飞行任务队列
+    let activeFlightCount = 0;
+    let completedFlightCount = 0;
+    let totalFlights = 0;
+    let currentGroups = null;
+    let flightCompletionCallback = null;
+
+    // DOM 元素
+    const step1Div = document.getElementById('step1');
+    const step2Div = document.getElementById('step2');
+    const step3Div = document.getElementById('step3');
+    const step4Div = document.getElementById('step4');
+    const fileInput = document.getElementById('fileInput');
+    const uploadTrigger = document.getElementById('uploadTrigger');
+    const startAnimationBtn = document.getElementById('startAnimationBtn');
+    const backToImportStep2 = document.getElementById('backToImportStep2');
+    const skipAnimationBtn = document.getElementById('skipAnimationBtn');
+    const copyFinalBtn = document.getElementById('copyFinalBtn');
+    const newImportBtn = document.getElementById('newImportBtn');
+    const studentChecklistDiv = document.getElementById('studentChecklist');
+    const leaderCountSpan = document.getElementById('leaderCount');
+    const animationContainer = document.getElementById('animationContainer');
+    const animationProgressSpan = document.getElementById('animationProgress');
+    const finalGroupsContainer = document.getElementById('finalGroupsContainer');
+    const finalStatsSpan = document.getElementById('finalStats');
+    const toastMsgDiv = document.getElementById('toastMsg');
+
+    function showToast(msg, isError = false) {
+        toastMsgDiv.innerText = msg;
+        toastMsgDiv.classList.add('show');
+        setTimeout(() => toastMsgDiv.classList.remove('show'), 2500);
+    }
+    function showStep(step) {
+        step1Div.style.display = 'none';
+        step2Div.style.display = 'none';
+        step3Div.style.display = 'none';
+        step4Div.style.display = 'none';
+        if (step === 1) step1Div.style.display = 'block';
+        else if (step === 2) step2Div.style.display = 'block';
+        else if (step === 3) step3Div.style.display = 'block';
+        else if (step === 4) step4Div.style.display = 'block';
+    }
+    function clearAllClones() {
+        activeClones.forEach(clone => { if (clone && clone.remove) clone.remove(); });
+        activeClones = [];
+    }
+    function abortAnimationCleanup() {
+        abortFlag = true;
+        animationActive = false;
+        clearAllClones();
+        pendingFlights = [];
+        activeFlightCount = 0;
+    }
+    function renderStudentSelection() {
+        if (!students.length) {
+            studentChecklistDiv.innerHTML = '<div style="text-align:center; padding:40px;">暂无学生，请先导入</div>';
+            return;
+        }
+        let html = '';
+        students.forEach((student, idx) => {
+            const isLeader = selectedLeaders.has(idx);
+            html += `<div class="student-card">
+                    <input type="checkbox" class="leader-cb" data-idx="${idx}" ${isLeader ? 'checked' : ''}>
+                    <span class="student-name">${escapeHtml(student.name)}</span>
+                    ${isLeader ? '<span class="leader-badge">组长</span>' : ''}
+                </div>`;
+        });
+        studentChecklistDiv.innerHTML = html;
+        document.querySelectorAll('.leader-cb').forEach(cb => {
+            cb.addEventListener('change', (e) => {
+                const idx = parseInt(cb.dataset.idx);
+                if (cb.checked) {
+                    if (selectedLeaders.size >= 25) { showToast('组长最多25人', true); cb.checked = false; return; }
+                    if (selectedLeaders.size >= students.length) { showToast('NO!NO!NO!你要造反啊？', true); cb.checked = false; return; }
+                    selectedLeaders.add(idx);
+                    const parent = cb.closest('.student-card');
+                    if (!parent.querySelector('.leader-badge')) {
+                        const badge = document.createElement('span');
+                        badge.className = 'leader-badge';
+                        badge.innerText = '组长';
+                        parent.appendChild(badge);
+                    }
+                } else {
+                    selectedLeaders.delete(idx);
+                    const badge = cb.closest('.student-card')?.querySelector('.leader-badge');
+                    if (badge) badge.remove();
+                }
+                leaderCountSpan.innerText = `已选${selectedLeaders.size}人`;
+            });
+        });
+        leaderCountSpan.innerText = `已选${selectedLeaders.size}人`;
+    }
+    function computeGroups() {
+        if (!students.length || selectedLeaders.size === 0) return null;
+        const leaders = [], members = [];
+        for (let i = 0; i < students.length; i++) {
+            if (selectedLeaders.has(i)) leaders.push(students[i].name);
+            else members.push(students[i].name);
+        }
+        const shuffledMembers = shuffleArray([...members]);
+        const groups = leaders.map(l => ({ leader: l, members: [] }));
+        for (let i = 0; i < shuffledMembers.length; i++) groups[i % groups.length].members.push(shuffledMembers[i]);
+        return groups;
+    }
+    function shuffleArray(arr) { for (let i = arr.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [arr[i], arr[j]] = [arr[j], arr[i]]; } return arr; }
+    function buildAnimationStage(groups) {
+        const allStudents = students.map(s => s.name);
+        const leaderNames = groups.map(g => g.leader);
+        const matrixDiv = document.createElement('div');
+        matrixDiv.className = 'student-matrix';
+        matrixDiv.id = 'studentMatrix';
+        allStudents.forEach(name => {
+            const tile = document.createElement('div');
+            tile.className = 'student-tile';
+            tile.textContent = name;
+            if (leaderNames.includes(name)) {
+                tile.style.background = '#eef4ff';
+                tile.style.border = '1px solid #3b82f6';
+                tile.style.fontWeight = 'bold';
+            }
+            matrixDiv.appendChild(tile);
+        });
+        const targetDiv = document.createElement('div');
+        targetDiv.className = 'groups-target';
+        targetDiv.id = 'groupsTarget';
+        groups.forEach((group, idx) => {
+            const groupCard = document.createElement('div');
+            groupCard.className = 'target-group';
+            groupCard.dataset.groupIdx = idx;
+            groupCard.innerHTML = `
+                <div class="target-group-header">第 ${idx+1} 组</div>
+                <div class="target-leader">SU[超级管理员]${escapeHtml(group.leader)}</div>
+                <div class="target-members" id="groupMembers-${idx}">
+                    <div class="empty-members">组员=NULL</div>
+                </div>
+            `;
+            targetDiv.appendChild(groupCard);
+        });
+        animationContainer.innerHTML = '';
+        animationContainer.appendChild(matrixDiv);
+        animationContainer.appendChild(targetDiv);
+    }
+
+    // 核心飞行函数 (单个)
+    function performFly(studentName, targetGroupIdx, tileElement, onComplete) {
+        if (abortFlag || !tileElement || !document.body.contains(tileElement)) {
+            if (onComplete) onComplete();
+            return;
+        }
+        const startRect = tileElement.getBoundingClientRect();
+        const membersContainer = document.getElementById(`groupMembers-${targetGroupIdx}`);
+        if (!membersContainer) { if (onComplete) onComplete(); return; }
+        const targetRect = membersContainer.getBoundingClientRect();
+        // 目标点: 容器中间偏上，优雅落点
+        const targetX = targetRect.left + (targetRect.width / 2) - (startRect.width / 2);
+        const targetY = targetRect.top + (targetRect.height / 3) - 6;
+        const clone = document.createElement('div');
+        clone.className = 'fly-clone';
+        clone.textContent = studentName;
+        clone.style.left = `${startRect.left}px`;
+        clone.style.top = `${startRect.top}px`;
+        clone.style.width = `${startRect.width}px`;
+        clone.style.height = `${startRect.height}px`;
+        clone.style.lineHeight = `${startRect.height}px`;
+        document.body.appendChild(clone);
+        activeClones.push(clone);
+        // 强制重绘后开始飞行
+        requestAnimationFrame(() => {
+            if (abortFlag) {
+                if (clone && clone.remove) clone.remove();
+                if (onComplete) onComplete();
+                return;
+            }
+            clone.style.transform = `translate(${targetX - startRect.left}px, ${targetY - startRect.top}px)`;
+            clone.style.opacity = '0.65';
+        });
+        const finishFlight = () => {
+            clone.removeEventListener('transitionend', finishFlight);
+            const idx = activeClones.indexOf(clone);
+            if (idx !== -1) activeClones.splice(idx, 1);
+            if (clone && clone.remove) clone.remove();
+            if (abortFlag) { if (onComplete) onComplete(); return; }
+            // 更新小组UI
+            if (membersContainer) {
+                const emptyDiv = membersContainer.querySelector('.empty-members');
+                if (emptyDiv) emptyDiv.remove();
+                const memberDiv = document.createElement('div');
+                memberDiv.className = 'member-fly-item';
+                memberDiv.textContent = studentName;
+                membersContainer.appendChild(memberDiv);
+                memberDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+            if (tileElement && tileElement.remove) tileElement.remove();
+            if (onComplete) onComplete();
+        };
+        clone.addEventListener('transitionend', finishFlight, { once: true });
+        setTimeout(() => {
+            if (clone && clone.parentNode) {
+                clone.removeEventListener('transitionend', finishFlight);
+                finishFlight();
+            }
+        }, 550);
+    }
+
+    // 并发飞行控制器
+    function startConcurrentFlights(flightTasks, maxConcurrent = 4) {
+        if (abortFlag) return Promise.reject('aborted');
+        totalFlights = flightTasks.length;
+        completedFlightCount = 0;
+        activeFlightCount = 0;
+        let taskIndex = 0;
+        return new Promise((resolve) => {
+            function launchNext() {
+                while (activeFlightCount < maxConcurrent && taskIndex < flightTasks.length && !abortFlag) {
+                    const task = flightTasks[taskIndex++];
+                    activeFlightCount++;
+                    performFly(task.name, task.targetGroupIdx, task.tileElement, () => {
+                        activeFlightCount--;
+                        completedFlightCount++;
+                        if (!abortFlag) {
+                            animationProgressSpan.innerText = `温馨提示:1+1=2${completedFlightCount}/${totalFlights}`;
+                        }
+                        if (completedFlightCount === totalFlights && !abortFlag) {
+                            resolve();
+                        } else if (!abortFlag) {
+                            launchNext();
+                        }
+                    });
+                }
+            }
+            launchNext();
+            // 如果任务为空，直接resolve
+            if (flightTasks.length === 0) resolve();
+        });
+    }
+
+    async function runAnimation(groups) {
+        if (animationActive) return;
+        abortFlag = false;
+        animationActive = true;
+        const assignment = new Map();
+        for (let gi = 0; gi < groups.length; gi++) {
+            for (let m of groups[gi].members) assignment.set(m, gi);
+        }
+        const nonLeaders = students.filter(s => !selectedLeaders.has(s.id)).map(s => s.name);
+        const shuffledNonLeaders = shuffleArray([...nonLeaders]);
+        const total = shuffledNonLeaders.length;
+        if (total === 0) {
+            animationActive = false;
+            animationProgressSpan.innerText = 'NAN';
+            showFinalResult(groups);
+            return;
+        }
+        const tiles = document.querySelectorAll('#studentMatrix .student-tile');
+        const tileMap = new Map();
+        tiles.forEach(tile => tileMap.set(tile.textContent, tile));
+        const flightTasks = [];
+        for (let i = 0; i < shuffledNonLeaders.length; i++) {
+            const studentName = shuffledNonLeaders[i];
+            const targetGroupIdx = assignment.get(studentName);
+            const tileElement = tileMap.get(studentName);
+            if (tileElement && targetGroupIdx !== undefined) {
+                flightTasks.push({ name: studentName, targetGroupIdx, tileElement });
+            }
+        }
+        if (flightTasks.length === 0) {
+            animationActive = false;
+            showFinalResult(groups);
+            return;
+        }
+        animationProgressSpan.innerText = `归途>凛冬夜`;
+        await startConcurrentFlights(flightTasks, 4);
+        if (!abortFlag) {
+            animationProgressSpan.innerText = '分完了';
+            const remainingTiles = document.querySelectorAll('#studentMatrix .student-tile');
+            remainingTiles.forEach(t => t.remove());
+            showFinalResult(groups);
+            showToast('行');
+        }
+        animationActive = false;
+    }
+
+    function showFinalResult(groups) {
+        finalGroups = groups;
+        let html = '';
+        groups.forEach((group, idx) => {
+            html += `
+                <div class="final-group-card">
+                    <div>第 ${idx+1} 组</div>
+                    <div class="leader-area">SU[超级管理员]${escapeHtml(group.leader)}</div>
+                    <div class="members-area">
+                        <div class="members-title">组员 (${group.members.length}人)</div>
+                        <div class="member-list">
+                            ${group.members.length ? group.members.map(m => `<div>${escapeHtml(m)}</div>`).join('') : '<div style="color:#94a3b8;">NULL</div>'}
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        finalGroupsContainer.innerHTML = html;
+        const totalMembers = groups.reduce((s,g)=>s+g.members.length,0);
+        finalStatsSpan.innerText = `共${groups.length}组 | 组长${groups.length}人 | 组员${totalMembers}人`;
+        showStep(4);
+        autoDownloadTxt(groups);
+    }
+
+    function autoDownloadTxt(groups) {
+        if (!groups || groups.length === 0) return;
+        let text = "===== 分组结果 =====\n";
+        text += `生成时间: ${new Date().toLocaleString()}\n组长总数: ${groups.length}  组员总数: ${groups.reduce((s,g)=>s+g.members.length,0)}\n\n`;
+        groups.forEach((group, idx) => {
+            text += `【第 ${idx+1} 组】\n组长：${group.leader}\n组员：\n`;
+            if (group.members.length) group.members.forEach(m => text += `  · ${m}\n`);
+            else text += `  (无)\n`;
+            text += `\n`;
+        });
+        const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        link.href = url;
+        link.download = `分组结果_${new Date().toISOString().slice(0,19)}.txt`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        showToast('已自动下载MC', false);
+    }
+
+    function getGroupsText(groups) {
+        if (!groups) return null;
+        let text = "===== 分组结果 =====\n生成时间: " + new Date().toLocaleString() + "\n组长总数: " + groups.length + "  组员总数: " + groups.reduce((s,g)=>s+g.members.length,0) + "\n\n";
+        groups.forEach((group, idx) => {
+            text += `【第 ${idx+1} 组】\n组长：${group.leader}\n组员：\n`;
+            if (group.members.length) group.members.forEach(m => text += `  · ${m}\n`);
+            else text += `  (无)\n`;
+            text += `\n`;
+        });
+        return text;
+    }
+
+    async function startGroupAnimation() {
+        if (!students.length) { showToast('人呢', true); return; }
+        if (selectedLeaders.size === 0) { showToast('请选择一位活人', true); return; }
+        if (selectedLeaders.size > 25) { showToast('组长不能超过25人!', true); return; }
+        const groups = computeGroups();
+        if (!groups) { showToast('哎!呀!我***土豆服务器发芽了！', true); return; }
+        animationGroups = groups;
+        buildAnimationStage(groups);
+        showStep(3);
+        animationProgressSpan.innerText = '分组初始化';
+        setTimeout(() => runAnimation(groups), 80);
+    }
+
+    function skipToResult() {
+        if (animationActive) {
+            abortFlag = true;
+            animationActive = false;
+            clearAllClones();
+        }
+        const groups = computeGroups();
+        if (groups) showFinalResult(groups);
+        else showToast('土豆发芽了', true);
+    }
+
+    // 文件导入
+    function importTxt(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const lines = e.target.result.split(/\r?\n/);
+                const names = lines.map(l=>l.trim()).filter(l=>l);
+                if (names.length === 0) reject(new Error('名字被夜神月偷走了'));
+                else resolve(names);
+            };
+            reader.onerror = () => reject(new Error('看不懂思密达'));
+            reader.readAsText(file, 'UTF-8');
+        });
+    }
+    function importExcel(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const sheet = workbook.Sheets[workbook.SheetNames[0]];
+                const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
+                const names = [];
+                for (let i=0; i<rows.length; i++) {
+                    let cell = rows[i][0];
+                    if (cell && typeof cell === 'string') cell = cell.trim();
+                    else if (cell && typeof cell === 'number') cell = cell.toString().trim();
+                    if (cell && cell !== "") names.push(cell);
+                }
+                if (names.length === 0) reject(new Error('姓名=NULL'));
+                else resolve(names);
+            };
+            reader.onerror = () => reject(new Error('Excel读取失败'));
+            reader.readAsArrayBuffer(file);
+        });
+    }
+    async function importFile(file) {
+        if (!file) return;
+        const ext = file.name.split('.').pop().toLowerCase();
+        try {
+            let names = [];
+            if (ext === 'txt') names = await importTxt(file);
+            else if (ext === 'xlsx' || ext === 'xls') names = await importExcel(file);
+            else { showToast('仅支持 .txt 或 .xlsx/.xls', true); return; }
+            students = names.map((name,idx)=>({ id:idx, name }));
+            selectedLeaders.clear();
+            renderStudentSelection();
+            showStep(2);
+            showToast(`成功导入 ${students.length} 名学生，请勾选组长`, false);
+        } catch(err) { showToast(`导入失败: ${err.message}`, true); }
+    }
+    function resetToImport() {
+        abortFlag = true;
+        animationActive = false;
+        clearAllClones();
+        students = [];
+        selectedLeaders.clear();
+        finalGroups = null;
+        showStep(1);
+        fileInput.value = '';
+    }
+    function copyFinal() {
+        const text = getGroupsText(finalGroups);
+        if (!text) { showToast('NULL', true); return; }
+        navigator.clipboard.writeText(text).then(() => showToast('已复制')).catch(()=>showToast('复制失败,请V我50',true));
+    }
+    function bindEvents() {
+        uploadTrigger.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', (e) => { if (e.target.files && e.target.files[0]) importFile(e.target.files[0]); });
+        startAnimationBtn.addEventListener('click', startGroupAnimation);
+        backToImportStep2.addEventListener('click', resetToImport);
+        skipAnimationBtn.addEventListener('click', skipToResult);
+        copyFinalBtn.addEventListener('click', copyFinal);
+        newImportBtn.addEventListener('click', resetToImport);
+    }
+    function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[m] || m)); }
+    bindEvents();
+    showStep(1);
+</script>
+</body>
+</html>
